@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::errors::Error;
+use crate::fs_base::Error;
 use crate::serde::Serde;
 
 const STRING_BUFFER_PREAMBLE : &str = "STRING_BUFFER";
