@@ -17,6 +17,14 @@ impl StringBuffer{
     pub fn from(name_map0 : HashMap<String, u32>, serialization_size0 : u32, next_index0 : u32) -> Self{
         Self{name_map : name_map0, serialization_size : serialization_size0, next_index : next_index0 }
     }
+    pub fn get(&self, s : &String) -> Result<u32, Error>{
+       match self.name_map.get(s) {
+            Some(num) => { Ok(*num) }
+            None => {
+                Err(Error::InvalidDirective(format!("Bad string: {} ", s)))
+            }
+       }
+    }
     pub fn add(&mut self, name : &String) -> u32{
         self.name_map.insert(name.clone(), self.next_index);
         let copy = self.next_index;
