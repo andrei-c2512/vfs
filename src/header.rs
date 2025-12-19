@@ -2,8 +2,9 @@ use crate::string_buffer::StringBuffer;
 use crate::file::File;
 use crate::directory::Directory;
 use crate::fs_base::Error;
-use crate::traits::Directive;
+use crate::traits::{Directive,Serde};
 use crate::util::string_helper;
+use crate::serde;
 
 use std::collections::HashMap;
 
@@ -37,13 +38,76 @@ impl Directive for Node{
     }
 }
 
+// --- REWRITE: Use enums instead of constants
+impl Serde for Node {
+    fn serialize(&self) -> Vec<u8>{
+        let mut res = Vec::new();
+        match self {
+            Node::Directory(dir) => {
+                res.push(0);
+                res.extend_from_slice(
+                    &dir.serialize()
+                );
+            }
+            Node::File(file) => {
+                res.push(1); 
+                res.extend_from_slice(
+                    &file.serialize()
+                );
+            }
+        }
+        res
+    }
+    fn deserialize(buffer : &mut &[u8]) -> Result<Self, Error> {
+        let node_type = serde::deser_u8(buffer)?;
+        match node_type {
+            0 => { 
+                let dir = Directory::deserialize(buffer)?;
+                Ok(Node::Directory(dir))
+            }
+            1 => {
+                let file = File::deserialize(buffer)?;
+                Ok(Node::File(file))
+            }
+            _ => {
+                Err(Error::BadDeser("Unrecognized node type".to_string()))
+            }
+        }
+    } 
+}
+
+fn serialize_node_list(list : &Vec<Node>) -> Vec<u8>{
+    let mut res = Vec::new();
+    for n in list.iter() {
+        res.extend_from_slice(
+            &n.serialize()
+        );
+    }
+    res
+}
+
+fn deserialize_node_list(buffer : &mut &[u8]) -> Result<Vec<Node>, Error>{
+    let capacity = serde::deser_u32(buffer)?;
+    let mut res = Vec::with_capacity(capacity as usize);
+
+    for _ in 0..capacity {
+        let node = Node::deserialize(buffer)?;
+        res.push(node);
+    }
+        
+    Ok(res)
+}
+
 pub struct Header{
     node_buffer : Vec<Node>,
+    str_buffer : StringBuffer,
     root_map : HashMap<String, u32>,
-    str_buffer : StringBuffer
 }
 
 impl Header{
+    pub fn from(node_buffer : Vec<Node>, str_buffer : StringBuffer) -> Self{
+        Self{ node_buffer : node_buffer, str_buffer : str_buffer , root_map : HashMap::new()}
+    }
     pub fn add_node(&mut self, path : &str, n : Node) -> Option<Error>{
         let parent_id = match self.navigate(path){
             Ok(id) => id,
@@ -60,8 +124,6 @@ impl Header{
                 return Some(Error::InvalidPath("Cannot add to a file to a file.".to_string()));
             }
         };
-         
-
         None 
     }
     
@@ -86,6 +148,30 @@ impl Header{
         }
         // let next_node = self.node_buffer;
         Ok(current_node)
+    }
+}
+
+impl Serde for Header{
+    fn serialize(&self) -> Vec<u8>{
+        let mut res = Vec::new();
+
+        // we deduce the roots at runtime 
+        res.extend_from_slice(
+            &serialize_node_list(&self.node_buffer)
+        );
+        res.extend_from_slice(
+            &self.str_buffer.serialize()
+        );
+
+        res
+    }
+    fn deserialize(buffer : &mut &[u8]) -> Result<Self, Error>{
+        let list = deserialize_node_list(buffer)?;
+        let str_buf = StringBuffer::deserialize(buffer)?;
+
+        Ok(
+            Header::from(list, str_buf)
+        )
     }
 }
 
