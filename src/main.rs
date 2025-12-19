@@ -1,11 +1,12 @@
 pub mod util;
 pub mod string_buffer;
-pub mod serde;
 pub mod directory;
 pub mod fs_base;
 pub mod file;
 pub mod traits;
 pub mod header;
+pub mod inode;
+pub mod serde;
 
 use std::collections::HashMap;
 

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use crate::fs_base::Error;
-use crate::serde::Serde;
+use crate::traits::Serde;
 
 const STRING_BUFFER_PREAMBLE : &str = "STRING_BUFFER";
 
@@ -97,7 +97,7 @@ impl Serde for StringBuffer{
         
         buffer
     }
-    fn deserialize(mut buffer: &[u8]) -> Result<Self, Error> {
+    fn deserialize(buffer: &mut &[u8]) -> Result<Self, Error> {
         let mut name_map = HashMap::<String, u32>::new();
         let mut serialization_size = 0 ;
         let mut next_index = 0;
@@ -108,8 +108,9 @@ impl Serde for StringBuffer{
 
         while buffer.len() != 0 {
             let str_size = StringBuffer::deser_str_len(buffer)?;
-            buffer = &buffer[4..];
+            *buffer = &buffer[4..];
             let parsed_str = StringBuffer::deser_str(buffer, str_size as usize)?;
+            *buffer = &buffer[str_size as usize..];
             name_map.insert(parsed_str, next_index);
 
             next_index += 1;

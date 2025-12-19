@@ -9,6 +9,7 @@ pub enum Error{
     EmptyPath(String),
     InvalidPath(String),
     InvalidDirective(String),
+    BadDeser(String),
 }
 
 

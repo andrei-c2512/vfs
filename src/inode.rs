@@ -1,0 +1,58 @@
+use crate::fs_base::{Permissions,Error};
+use crate::traits::Serde;
+use crate::util::date_time::DateTime;
+use crate::serde;
+
+pub struct INode{
+    name_id : u32,
+    permissions : Permissions,
+    created_at : DateTime,
+    last_modified : DateTime,
+    size : usize,
+}
+
+impl INode{
+    fn new() -> Self{
+        Self{name_id : 0 , permissions : 0, created_at : DateTime::new(), last_modified : DateTime::new(), size : 0}
+    }
+    fn from(name_id : u32, perms : Permissions, created_at : DateTime, last_modified : DateTime, size : usize) -> Self{
+        Self{ name_id : 0, permissions : perms, created_at : created_at, last_modified : last_modified, size : size}
+    }
+}
+
+impl Serde for INode{
+    fn serialize(&self) -> Vec<u8>{
+        let mut result :Vec<u8> = Vec::new();
+        // CHANGE THIS PLS I MISS C++ TEMPLATES HOLY SHIT PLEASE PLAEAS PELASE
+        let bytes = self.name_id.to_be_bytes();
+        result.extend_from_slice(&bytes);
+
+        let bytes = self.permissions.to_be_bytes();
+        result.extend_from_slice(&bytes);
+
+        result.extend_from_slice(
+            &self.created_at.serialize()
+        ); 
+        result.extend_from_slice(
+            &self.last_modified.serialize()
+        );
+
+        let bytes = self.size.to_be_bytes(); 
+        result.extend_from_slice(&bytes);
+
+        result
+    }
+    fn deserialize(buffer : &mut &[u8]) -> Result<Self, Error> {
+        let mut n : INode =  INode::new();
+
+        n.name_id = serde::deser_u32(buffer)?;
+        n.permissions = serde::deser_u16(buffer)?;
+        n.created_at = DateTime::deserialize(buffer)?;
+        n.last_modified = DateTime::deserialize(buffer)?;
+        n.size = serde::deser_usize(buffer)?;
+
+        Ok(n)
+    }
+   
+}
+
