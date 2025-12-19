@@ -7,6 +7,7 @@ pub mod traits;
 pub mod header;
 pub mod inode;
 pub mod serde;
+pub mod vfs;
 
 use std::collections::HashMap;
 
