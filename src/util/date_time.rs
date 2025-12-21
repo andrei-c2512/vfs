@@ -74,6 +74,9 @@ impl DateTime{
     pub fn new() -> Self {
         Self{ date : Date::new(), time : Time::new() }
     }
+    pub fn now() -> Self{
+        Self{ date : Date::now(), time : Time::now()} 
+    }
     pub fn from(date : Date, time : Time) -> Self{
         Self{date : date, time : time}
     }

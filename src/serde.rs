@@ -66,7 +66,7 @@ pub fn deser_vec_u32(buffer : &mut &[u8]) -> Result<Vec<u32>, Error> {
     let capacity = deser_u32(buffer)?;
     let mut res = Vec::with_capacity(capacity as usize);
 
-    for i in 0..capacity {
+    for _ in 0..capacity {
         res.push(
             deser_u32(buffer)?
         );

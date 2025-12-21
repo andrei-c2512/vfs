@@ -8,14 +8,15 @@ pub struct StringBuffer{
     name_map : HashMap<String, u32>,
     serialization_size : u32,
     next_index : u32,
+    pub string_list : Vec<String>,
 }
 
 impl StringBuffer{
     pub fn new() -> Self{
-       Self{name_map : HashMap::new(), serialization_size : 0, next_index : 0} 
+       Self{name_map : HashMap::new(), serialization_size : 0, next_index : 0, string_list : Vec::new()} 
     }
     pub fn from(name_map0 : HashMap<String, u32>, serialization_size0 : u32, next_index0 : u32) -> Self{
-        Self{name_map : name_map0, serialization_size : serialization_size0, next_index : next_index0 }
+        Self{name_map : name_map0, serialization_size : serialization_size0, next_index : next_index0, string_list : Vec::new() }
     }
     pub fn get(&self, s : &String) -> Result<u32, Error>{
        match self.name_map.get(s) {
@@ -25,8 +26,11 @@ impl StringBuffer{
             }
        }
     }
-    pub fn add(&mut self, name : &String) -> u32{
-        self.name_map.insert(name.clone(), self.next_index);
+    pub fn add(&mut self, name : &str) -> u32{
+        // --- REWRITE: yes yes I know I am doing 2 conversions
+        println!("Adding '{}'", name);
+        self.string_list.push(name.to_string());
+        self.name_map.insert(name.to_string(), self.next_index);
         let copy = self.next_index;
         self.next_index += 1;
         return copy;

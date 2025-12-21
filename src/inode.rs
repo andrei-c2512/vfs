@@ -4,19 +4,19 @@ use crate::util::date_time::DateTime;
 use crate::serde;
 
 pub struct INode{
-    name_id : u32,
-    permissions : Permissions,
-    created_at : DateTime,
-    last_modified : DateTime,
-    size : usize,
+    pub name_id : u32,
+    pub permissions : Permissions,
+    pub created_at : DateTime,
+    pub last_modified : DateTime,
+    pub size : usize,
 }
 
 impl INode{
-    fn new() -> Self{
-        Self{name_id : 0 , permissions : 0, created_at : DateTime::new(), last_modified : DateTime::new(), size : 0}
+    pub fn new() -> Self{
+        Self{name_id : 0 , permissions : 0, created_at : DateTime::now(), last_modified : DateTime::now(), size : 0}
     }
-    fn from(name_id : u32, perms : Permissions, created_at : DateTime, last_modified : DateTime, size : usize) -> Self{
-        Self{ name_id : 0, permissions : perms, created_at : created_at, last_modified : last_modified, size : size}
+    pub fn from(name_id : u32, perms : Permissions, created_at : DateTime, last_modified : DateTime, size : usize) -> Self{
+        Self{ name_id : name_id, permissions : perms, created_at : created_at, last_modified : last_modified, size : size}
     }
 }
 
@@ -52,7 +52,6 @@ impl Serde for INode{
         n.size = serde::deser_usize(buffer)?;
 
         Ok(n)
-    }
-   
+    } 
 }
 

@@ -99,29 +99,38 @@ fn deserialize_node_list(buffer : &mut &[u8]) -> Result<Vec<Node>, Error>{
 }
 
 pub struct Header{
-    node_buffer : Vec<Node>,
-    str_buffer : StringBuffer,
-    root_map : HashMap<String, u32>,
+    pub node_buffer : Vec<Node>,
+    pub str_buffer : StringBuffer,
 }
 
 impl Header{
-    pub fn from(node_buffer : Vec<Node>, str_buffer : StringBuffer) -> Self{
-        Self{ node_buffer : node_buffer, str_buffer : str_buffer , root_map : HashMap::new()}
+    pub fn new() -> Self{
+        let mut node_buffer = Vec::new();
+        node_buffer.push(Node::Directory(Directory::new()));
+
+        let mut str_buf = StringBuffer::new();
+        str_buf.add("@");
+
+        Self{ node_buffer : node_buffer, str_buffer : str_buf }
     }
-    pub fn add_node(&mut self, path : &str, n : Node) -> Option<Error>{
+    pub fn from(node_buffer : Vec<Node>, str_buffer : StringBuffer) -> Self{
+        Self{ node_buffer : node_buffer, str_buffer : str_buffer }
+    }
+    pub fn add_node(&mut self, path : &str, name_id : u32, n : Node) -> Option<Error>{
         let parent_id = match self.navigate(path){
             Ok(id) => id,
             Err(err) => {return Some(err);}
         };
         let node_id = self.push_node(n);
-        let mut parent_ref = &mut self.node_buffer[parent_id as usize];
+        let mut parent_ref = &mut self.node_buffer[parent_id as usize]; 
 
         match &mut parent_ref{
             Node::Directory(dir) => {
-                dir.add_child(node_id);
+                println!("Added child to path '{}'", path);
+                dir.add_child(name_id, node_id);
             }
             Node::File(_) => {
-                return Some(Error::InvalidPath("Cannot add to a file to a file.".to_string()));
+                return Some(Error::InvalidPath("Cannot add to a file a file.".to_string()));
             }
         };
         None 
@@ -133,20 +142,35 @@ impl Header{
         id as u32
     }
     fn navigate(&self, path : &str) -> Result<u32,Error> {
+        // println!("{}", path);
         let steps = string_helper::split_path(path);
+        println!("{:?}", steps);
         if steps.len() == 0 {
             return Err(Error::EmptyPath("Provided an empty path".to_string()));
         }
-        let current_node = self.root_map[steps.get(0).unwrap()];
+
+        let mut current_node = 0;
+
         for step in steps.iter().skip(1){
+            // --- REWRITE: I don't like the logic here. I do redundant checks
             let str_id = self.str_buffer.get(step)?;
             let node_ref = &self.node_buffer[current_node as usize];
-            if node_ref.has_child_by_id(str_id) == false {
-                return Err(Error::InvalidPath("Provided an invalid path at.".to_string()));
-            }
 
+            if node_ref.has_child_by_id(str_id) == false {
+                return Err(Error::InvalidPath("Provided an invalid path.".to_string()));
+            }
+            println!("Valid"); 
+            match node_ref {
+                Node::Directory(dir) => {
+                    current_node = dir.name_child_map[&str_id];
+                }
+                _ => {
+                    return Err(Error::Unreachable("Unreachable code".to_string()));                    
+                }
+            }
         }
         // let next_node = self.node_buffer;
+        println!("Navigated to node: {}", current_node);
         Ok(current_node)
     }
 }

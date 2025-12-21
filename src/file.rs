@@ -1,14 +1,13 @@
 use crate::fs_base::Error;
-use crate::util::date_time::DateTime;
 use crate::traits::{Directive, Serde};
 use crate::string_buffer::StringBuffer;
 use crate::inode::INode;
 use crate::serde;
 
 pub struct File{
-    inode : INode,
+    pub inode : INode,
 
-    block_indices : Vec<u32>,
+    pub block_indices : Vec<u32>,
 }
 
 impl File{
@@ -39,10 +38,10 @@ impl Serde for File{
 }
 
 impl Directive for File {
-    fn has_child(&self, str_buf : &StringBuffer, s : &String) -> bool{
+    fn has_child(&self, _str_buf : &StringBuffer, _s : &String) -> bool{
         false
     }
-    fn has_child_by_id(&self, id : u32) -> bool{
+    fn has_child_by_id(&self, _id : u32) -> bool{
         false
     }
 }

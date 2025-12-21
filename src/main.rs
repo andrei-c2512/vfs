@@ -8,19 +8,21 @@ pub mod header;
 pub mod inode;
 pub mod serde;
 pub mod vfs;
+pub mod printer;
 
-use std::collections::HashMap;
-
-use crate::util::date_time::DateTime;
-use crate::util::string_helper;
-use crate::string_buffer::StringBuffer;
-use crate::directory::Directory;
-use crate::file::File;
-use crate::traits::Directive;
-use crate::header::Header;
-
-
+use crate::vfs::Vfs;
 
 fn main() {
-    println!("Hello, world!");
+    let mut vfs = Vfs::create("test.vfs");
+    let paths = [ "@/etc", "@/etc/conf", "@/etc/tmp", "@/etc/tmp/p2", "@/etc/tmp/p3", "@/etc/work" ];
+    for path in paths {
+        match vfs.create_dir(path){
+            Some(err) => {
+                println!("Error: {}" , err);
+            }
+            None => {
+            }
+        }
+    }
+    vfs.print(); 
 }
