@@ -21,13 +21,13 @@ impl fmt::Display for Error{
     // is called. Also review error messages in general
     fn fmt(&self, f : &mut fmt::Formatter<'_>) -> fmt::Result {
         match self{
-            Error::InvalidPreamble(e) => write!(f, "{}", e),
-            Error::InvalidStringBuffer(e) => write!(f, "{}", e),
-            Error::EmptyPath(e) => write!(f, "{}", e),
-            Error::InvalidPath(e) => write!(f, "{}", e),
-            Error::InvalidDirective(e) => write!(f, "{}", e),
-            Error::BadDeser(e) => write!(f, "{}", e),
-            Error::Unreachable(e) => write!(f, "{}", e),
+            Error::InvalidPreamble(e) => write!(f, "Invalid preamble: {}", e),
+            Error::InvalidStringBuffer(e) => write!(f, "Invalid string buffer: {}", e),
+            Error::EmptyPath(e) => write!(f, "Empty path: {}", e),
+            Error::InvalidPath(e) => write!(f, "Invalid path: {}", e),
+            Error::InvalidDirective(e) => write!(f, "Invalid directive: {}", e),
+            Error::BadDeser(e) => write!(f, "Deserialization error: {}", e),
+            Error::Unreachable(e) => write!(f, "Encountered unreachable code: {}", e),
         }
     }
 }

@@ -3,6 +3,7 @@ use crate::traits::Serde;
 use crate::util::date_time::DateTime;
 use crate::serde;
 
+#[derive(PartialEq, Eq)]
 pub struct INode{
     pub name_id : u32,
     pub permissions : Permissions,

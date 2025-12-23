@@ -6,7 +6,7 @@ use crate::traits::{Directive,Serde};
 use crate::util::string_helper;
 use crate::serde;
 
-use std::collections::HashMap;
+//use std::collections::HashMap;
 
 
 
@@ -62,6 +62,7 @@ impl Serde for Node {
         let node_type = serde::deser_u8(buffer)?;
         match node_type {
             0 => { 
+                println!("Deserialising directory...");
                 let dir = Directory::deserialize(buffer)?;
                 Ok(Node::Directory(dir))
             }
@@ -78,6 +79,10 @@ impl Serde for Node {
 
 fn serialize_node_list(list : &Vec<Node>) -> Vec<u8>{
     let mut res = Vec::new();
+    res.extend_from_slice(
+        &(list.len() as u32).to_be_bytes()
+    );
+
     for n in list.iter() {
         res.extend_from_slice(
             &n.serialize()
@@ -87,14 +92,17 @@ fn serialize_node_list(list : &Vec<Node>) -> Vec<u8>{
 }
 
 fn deserialize_node_list(buffer : &mut &[u8]) -> Result<Vec<Node>, Error>{
+    println!("Deserialising node list...");
     let capacity = serde::deser_u32(buffer)?;
+    println!("Capacity: {}", capacity);
     let mut res = Vec::with_capacity(capacity as usize);
 
     for _ in 0..capacity {
         let node = Node::deserialize(buffer)?;
         res.push(node);
-    }
-        
+    } 
+
+    println!("Deserialization end for node list");
     Ok(res)
 }
 
@@ -175,6 +183,7 @@ impl Header{
     }
 }
 
+
 impl Serde for Header{
     fn serialize(&self) -> Vec<u8>{
         let mut res = Vec::new();
@@ -189,8 +198,10 @@ impl Serde for Header{
 
         res
     }
-    fn deserialize(buffer : &mut &[u8]) -> Result<Self, Error>{
+    fn deserialize(buffer : &mut &[u8]) -> Result<Self, Error>{ 
+        println!("{:?}", buffer);
         let list = deserialize_node_list(buffer)?;
+        println!("{:?}", buffer);
         let str_buf = StringBuffer::deserialize(buffer)?;
 
         Ok(

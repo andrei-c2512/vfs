@@ -1,6 +1,7 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::process::Command;
 
+#[derive(PartialEq, Eq)]
 pub struct Time{
     pub hour : u8,
     pub minute : u8,
@@ -36,6 +37,7 @@ impl Time{
     }
 }
 
+#[derive(PartialEq, Eq)]
 pub struct Date{
     pub year : u16,
     pub month : u8,
@@ -65,6 +67,7 @@ impl Date{
     }
 }
 
+#[derive(PartialEq, Eq)]
 pub struct DateTime{
     pub date : Date,
     pub time : Time,

@@ -39,5 +39,11 @@ pub fn print_tree(node_id : u32, buffer : &Vec<Node>, str_buf : &StringBuffer, l
             println!("{}{}", tab(level), str_buf.string_list[file.inode.name_id as usize]);
         }
     }
+}
 
+pub fn print_string_buffer(str_buf : &StringBuffer){
+    println!("String buffer: ");
+    for item in str_buf.string_list.iter() {
+        println!("\t{}", item);
+    }
 }

@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 use crate::fs_base::Error;
 use crate::traits::Serde;
+use crate::serde::deser_u32;
 
 const STRING_BUFFER_PREAMBLE : &str = "STRING_BUFFER";
 
+#[derive(PartialEq, Eq)]
 pub struct StringBuffer{
     name_map : HashMap<String, u32>,
     serialization_size : u32,
@@ -15,8 +17,8 @@ impl StringBuffer{
     pub fn new() -> Self{
        Self{name_map : HashMap::new(), serialization_size : 0, next_index : 0, string_list : Vec::new()} 
     }
-    pub fn from(name_map0 : HashMap<String, u32>, serialization_size0 : u32, next_index0 : u32) -> Self{
-        Self{name_map : name_map0, serialization_size : serialization_size0, next_index : next_index0, string_list : Vec::new() }
+    pub fn from(name_map0 : HashMap<String, u32>, serialization_size0 : u32, next_index0 : u32, string_list : Vec<String>) -> Self{
+        Self{name_map : name_map0, serialization_size : serialization_size0, next_index : next_index0, string_list : string_list}
     }
     pub fn get(&self, s : &String) -> Result<u32, Error>{
        match self.name_map.get(s) {
@@ -57,34 +59,21 @@ impl StringBuffer{
         result
     }
 
-    fn deser_str_len(buffer : &[u8]) -> Result<u32, Error>{
-        // --- REWRITE: This piece of code lowkey doesn't look idiomatic
-        let bytes_opt= buffer.get(0..4);
-        if bytes_opt == None {
-            return Err(
-                Error::InvalidStringBuffer("Did not find enough bytes to parse string length".to_string()));
-        }
-        let bytes =  bytes_opt.unwrap();
-        let byte_arr = [ bytes[0], bytes[1], bytes[2], bytes[3] ];
-
-        Ok(u32::from_le_bytes(byte_arr))
-    }
     fn deser_str(buffer : &[u8], length : usize) -> Result<String, Error> {
         let bytes_opt = buffer.get(0..length);
         if bytes_opt == None {
             return Err(
                 Error::InvalidStringBuffer("Did no provide the correct number of bytes for the string".to_string()));
         }
-        let _ = match String::from_utf8(bytes_opt.unwrap().to_vec()){
+        match String::from_utf8(bytes_opt.unwrap().to_vec()){
             Ok(res) => {
-                Ok(res)
+                return Ok(res);
             }
 
             Err(err) => {
-                Err(Error::InvalidStringBuffer(err.to_string()))
+                return Err(Error::InvalidStringBuffer(err.to_string()))
             }
         };
-        Ok(String::new())
     }
 }
 
@@ -94,8 +83,15 @@ impl Serde for StringBuffer{
         let mut buffer = Vec::with_capacity(self.serialization_size() + STRING_BUFFER_PREAMBLE.len());
         buffer.extend_from_slice(STRING_BUFFER_PREAMBLE.as_bytes());
         let sorted_map = self.map_as_vec(); 
-        
+       
+        // write down the size
+        buffer.extend_from_slice(
+            &(sorted_map.len() as u32).to_be_bytes()
+        );
         for item in sorted_map.iter() {
+            buffer.extend_from_slice(
+                &(item.len() as u32).to_be_bytes()
+            );
             buffer.extend_from_slice(item.as_bytes());
         }
         
@@ -107,21 +103,34 @@ impl Serde for StringBuffer{
         let mut next_index = 0;
 
         if buffer.starts_with(STRING_BUFFER_PREAMBLE.as_bytes()) == false {
+            println!("{:?}", buffer);
             return Err(Error::InvalidPreamble("Did not find the preamble specific to the string buffer".to_string()));
         }
 
-        while buffer.len() != 0 {
-            let str_size = StringBuffer::deser_str_len(buffer)?;
-            *buffer = &buffer[4..];
+        *buffer = &buffer[STRING_BUFFER_PREAMBLE.len()..];
+        let str_list_size = deser_u32(buffer)?;
+        println!("{}", str_list_size);
+
+        for _ in 0..str_list_size {
+            let str_size = deser_u32(buffer)?;
             let parsed_str = StringBuffer::deser_str(buffer, str_size as usize)?;
+            println!("{}", parsed_str);
             *buffer = &buffer[str_size as usize..];
             name_map.insert(parsed_str, next_index);
 
             next_index += 1;
         }
 
+        // --- REWRITE: duplicate code (see the StringBuffer implementation)
+        let mut string_list = Vec::new();
+        string_list.resize(name_map.len(), String::new());
+        println!("{}", name_map.len());
+        for (key, value ) in name_map.iter(){
+            string_list[*value as usize] = key.clone();
+        }
+        
         Ok(
-            StringBuffer::from(name_map, serialization_size, next_index)
+            StringBuffer::from(name_map, serialization_size, next_index, string_list)
         )
     }
 }

@@ -5,6 +5,7 @@ use crate::inode::INode;
 use crate::serde;
 use std::collections::HashMap;
 
+#[derive(PartialEq, Eq)]
 pub struct Directory{
     pub inode : INode,
 
@@ -20,17 +21,23 @@ impl Serde for Directory{
             &self.inode.serialize()
         );
 
-        let children : Vec<u32>= self.name_child_map.clone().into_values().collect();
         res.extend_from_slice(
-            &serde::ser_vec_u32(&children)
+            &serde::ser_vec_u32(&self.children)
         );
 
         res
     }
     fn deserialize(buffer : &mut &[u8]) -> Result<Self, Error>{
+        println!("{:?}", buffer);
+        println!("Size before deserializng inode: {}", buffer.len());
+
         let node = INode::deserialize(buffer)?;
-        let block_indices = serde::deser_vec_u32(buffer)?;
-        
+        println!("{:?}", buffer);
+        println!("Size before deserializng inode: {}", buffer.len());
+        let block_indices = serde::deser_vec_u32(buffer)?; 
+        println!("{:?}", buffer);
+        println!("Size after deserializng inode: {}", buffer.len());
+
         Ok(Directory::from(node, block_indices))
     }
 

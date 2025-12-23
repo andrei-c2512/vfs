@@ -1,20 +1,27 @@
 use crate::header::{Header,Node};
 use crate::directory::Directory;
 use crate::inode::INode;
-use crate::file::File;
 use crate::util::date_time::DateTime;
 use crate::fs_base::Error;
 use crate::string_buffer::StringBuffer;
 use crate::printer;
+use crate::traits::Serde;
+
+use std::fs::File;
+use std::io::Write;
 
 
 pub struct Vfs{
+    path : String,
     header : Header,
 }
 
 impl Vfs{
-    pub fn open(&self, path : &str) {
-        
+    pub fn open(path : &str) -> Result<Self,Error>{
+        let data = std::fs::read(path).unwrap();
+        let header =  Header::deserialize(&mut data.as_slice())?;
+
+        Ok(Self{ header : header, path : path.to_string()})
     }
     pub fn create_dir(&mut self, path : &str) -> Option<Error>{
         let last_slash_ind = path.rfind('/').unwrap_or(0);
@@ -33,7 +40,7 @@ impl Vfs{
     }
 
     pub fn create(path : &str) -> Self{        
-        Self{ header : Header::new() }
+        Self{ header : Header::new(), path : path.to_string() }
     }
     
     pub fn print(&self) {
@@ -43,5 +50,13 @@ impl Vfs{
     }
     fn init() {
 
+    }
+}
+
+impl Drop for Vfs{
+    fn drop(&mut self){
+        let data = self.header.serialize();
+        let mut file = File::create(self.path.clone()).unwrap();
+        file.write_all(&data);
     }
 }
