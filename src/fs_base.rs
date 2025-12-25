@@ -13,6 +13,7 @@ pub enum Error{
     InvalidDirective(String),
     BadDeser(String),
     Unreachable(String),
+    FileOps(String),
 }
 
 
@@ -28,6 +29,7 @@ impl fmt::Display for Error{
             Error::InvalidDirective(e) => write!(f, "Invalid directive: {}", e),
             Error::BadDeser(e) => write!(f, "Deserialization error: {}", e),
             Error::Unreachable(e) => write!(f, "Encountered unreachable code: {}", e),
+            Error::FileOps(e) => write!(f, "File operation error: {}", e),
         }
     }
 }

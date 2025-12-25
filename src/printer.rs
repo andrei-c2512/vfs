@@ -1,15 +1,15 @@
 use crate::header::Node;
-use crate::directory::Directory;
+use crate::directory::DirectoryData;
 use crate::header::Header;
 use crate::string_buffer::StringBuffer;
 //use crate::file::File;
 
- 
+// --- REWRITE: Instead of this printer module, use the Display/Debug trait 
 pub fn print_header(header : &Header) {
     print_tree(0, &header.node_buffer, &header.str_buffer, 0);
 }
 
-pub fn print_directory(dir : Directory, buffer : &Vec<Node>){
+pub fn print_directory(dir : DirectoryData, buffer : &Vec<Node>){
     
 }
 

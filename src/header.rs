@@ -1,6 +1,6 @@
 use crate::string_buffer::StringBuffer;
-use crate::file::File;
-use crate::directory::Directory;
+use crate::file::FileData;
+use crate::directory::DirectoryData;
 use crate::fs_base::Error;
 use crate::traits::{Directive,Serde};
 use crate::util::string_helper;
@@ -11,8 +11,8 @@ use crate::serde;
 
 
 pub enum Node{
-    Directory(Directory),
-    File(File),
+    Directory(DirectoryData),
+    File(FileData),
 }
 
 impl Directive for Node{
@@ -63,11 +63,11 @@ impl Serde for Node {
         match node_type {
             0 => { 
                 println!("Deserialising directory...");
-                let dir = Directory::deserialize(buffer)?;
+                let dir = DirectoryData::deserialize(buffer)?;
                 Ok(Node::Directory(dir))
             }
             1 => {
-                let file = File::deserialize(buffer)?;
+                let file = FileData::deserialize(buffer)?;
                 Ok(Node::File(file))
             }
             _ => {
@@ -114,7 +114,7 @@ pub struct Header{
 impl Header{
     pub fn new() -> Self{
         let mut node_buffer = Vec::new();
-        node_buffer.push(Node::Directory(Directory::new()));
+        node_buffer.push(Node::Directory(DirectoryData::new()));
 
         let mut str_buf = StringBuffer::new();
         str_buf.add("@");
@@ -142,6 +142,16 @@ impl Header{
             }
         };
         None 
+    }
+    pub fn get_file_capacity(&self, file_id : u32) -> Result<usize, Error> {
+        match &self.node_buffer[file_id as usize] {
+            Node::File(file) => {
+                return Ok(file.capacity());                
+            }
+            _ => {
+                return Err(Error::Unreachable("Reached unreachable code. Should not call get_file_capacity on a directory".to_string()));
+            }
+        }
     }
     
     fn push_node(&mut self, n : Node) -> u32{
@@ -209,5 +219,6 @@ impl Serde for Header{
         )
     }
 }
+
 
 

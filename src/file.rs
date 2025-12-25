@@ -3,20 +3,25 @@ use crate::traits::{Directive, Serde};
 use crate::string_buffer::StringBuffer;
 use crate::inode::INode;
 use crate::serde;
+use crate::block_device::BLOCK_CAPACITY;
 
-pub struct File{
+pub struct FileData{
     pub inode : INode,
 
     pub block_indices : Vec<u32>,
 }
 
-impl File{
-    fn from(n : INode, blocks : Vec<u32>) -> Self{
+impl FileData{
+    pub fn from(n : INode, blocks : Vec<u32>) -> Self{
         Self{inode : n, block_indices : blocks}
+    }
+    pub fn capacity(&self) -> usize{
+        // may change in the future
+        return self.block_indices.len() * BLOCK_CAPACITY;
     }
 }
 
-impl Serde for File{
+impl Serde for FileData{
     fn serialize(&self) -> Vec<u8>{
         let mut res = Vec::new(); 
         res.extend_from_slice(
@@ -32,12 +37,12 @@ impl Serde for File{
         let node = INode::deserialize(buffer)?;
         let block_indices = serde::deser_vec_u32(buffer)?;
         
-        Ok(File::from(node, block_indices))
+        Ok(FileData::from(node, block_indices))
     }
 
 }
 
-impl Directive for File {
+impl Directive for FileData {
     fn has_child(&self, _str_buf : &StringBuffer, _s : &String) -> bool{
         false
     }
@@ -45,6 +50,4 @@ impl Directive for File {
         false
     }
 }
-
-
 

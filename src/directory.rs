@@ -6,7 +6,7 @@ use crate::serde;
 use std::collections::HashMap;
 
 #[derive(PartialEq, Eq)]
-pub struct Directory{
+pub struct DirectoryData{
     pub inode : INode,
 
     pub children : Vec<u32>,
@@ -14,7 +14,7 @@ pub struct Directory{
     pub name_child_map : HashMap<u32, u32>,
 }
 
-impl Serde for Directory{
+impl Serde for DirectoryData{
     fn serialize(&self) -> Vec<u8>{
         let mut res = Vec::new();
         res.extend_from_slice(
@@ -38,12 +38,12 @@ impl Serde for Directory{
         println!("{:?}", buffer);
         println!("Size after deserializng inode: {}", buffer.len());
 
-        Ok(Directory::from(node, block_indices))
+        Ok(DirectoryData::from(node, block_indices))
     }
 
 }
 
-impl Directive for Directory {
+impl Directive for DirectoryData{
     // returns none on valid string
     fn has_child(&self, str_buf : &StringBuffer, s : &String) -> bool{
         let str_id = str_buf.get(s);
@@ -62,7 +62,7 @@ impl Directive for Directory {
     }
 }
 
-impl Directory{
+impl DirectoryData{
     pub fn new() -> Self{
         Self{inode : INode::new(), children : Vec::new(), name_child_map : HashMap::new() }
     }
