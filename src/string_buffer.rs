@@ -30,7 +30,7 @@ impl StringBuffer{
     }
     pub fn add(&mut self, name : &str) -> u32{
         // --- REWRITE: yes yes I know I am doing 2 conversions
-        println!("Adding '{}'", name);
+        // println!("Adding '{}'", name);
         
         match self.name_map.get(name) {
             Some(id) => {
@@ -107,22 +107,21 @@ impl Serde for StringBuffer{
     }
     fn deserialize(buffer: &mut &[u8]) -> Result<Self, Error> {
         let mut name_map = HashMap::<String, u32>::new();
-        let mut serialization_size = 0 ;
+        let serialization_size = 0 ;
         let mut next_index = 0;
 
         if buffer.starts_with(STRING_BUFFER_PREAMBLE.as_bytes()) == false {
-            println!("{:?}", buffer);
             return Err(Error::InvalidPreamble("Did not find the preamble specific to the string buffer".to_string()));
         }
 
         *buffer = &buffer[STRING_BUFFER_PREAMBLE.len()..];
         let str_list_size = deser_u32(buffer)?;
-        println!("{}", str_list_size);
+        // println!("{}", str_list_size);
 
         for _ in 0..str_list_size {
             let str_size = deser_u32(buffer)?;
             let parsed_str = StringBuffer::deser_str(buffer, str_size as usize)?;
-            println!("{}", parsed_str);
+            // println!("{}", parsed_str);
             *buffer = &buffer[str_size as usize..];
             name_map.insert(parsed_str, next_index);
 
@@ -132,7 +131,7 @@ impl Serde for StringBuffer{
         // --- REWRITE: duplicate code (see the StringBuffer implementation)
         let mut string_list = Vec::new();
         string_list.resize(name_map.len(), String::new());
-        println!("{}", name_map.len());
+        // println!("{}", name_map.len());
         for (key, value ) in name_map.iter(){
             string_list[*value as usize] = key.clone();
         }

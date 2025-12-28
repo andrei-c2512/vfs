@@ -62,7 +62,7 @@ impl Serde for Node {
         let node_type = serde::deser_u8(buffer)?;
         match node_type {
             0 => { 
-                println!("Deserialising directory...");
+                //println!("Deserialising directory...");
                 let dir = DirectoryData::deserialize(buffer)?;
                 Ok(Node::Directory(dir))
             }
@@ -92,9 +92,9 @@ fn serialize_node_list(list : &Vec<Node>) -> Vec<u8>{
 }
 
 fn deserialize_node_list(buffer : &mut &[u8]) -> Result<Vec<Node>, Error>{
-    println!("Deserialising node list...");
+    //println!("Deserialising node list...");
     let capacity = serde::deser_u32(buffer)?;
-    println!("Capacity: {}", capacity);
+    //println!("Capacity: {}", capacity);
     let mut res = Vec::with_capacity(capacity as usize);
 
     for _ in 0..capacity {
@@ -102,7 +102,7 @@ fn deserialize_node_list(buffer : &mut &[u8]) -> Result<Vec<Node>, Error>{
         res.push(node);
     } 
 
-    println!("Deserialization end for node list");
+    //println!("Deserialization end for node list");
     Ok(res)
 }
 
@@ -124,24 +124,25 @@ impl Header{
     pub fn from(node_buffer : Vec<Node>, str_buffer : StringBuffer) -> Self{
         Self{ node_buffer : node_buffer, str_buffer : str_buffer }
     }
-    pub fn add_node(&mut self, path : &str, name_id : u32, n : Node) -> Option<Error>{
+    // returns the ID of the newly added node
+    pub fn add_node(&mut self, path : &str, name_id : u32, n : Node) -> Result<u32, Error>{
         let parent_id = match self.navigate(path){
             Ok(id) => id,
-            Err(err) => {return Some(err);}
+            Err(err) => {return Err(err);}
         };
         let node_id = self.push_node(n);
         let mut parent_ref = &mut self.node_buffer[parent_id as usize]; 
 
         match &mut parent_ref{
             Node::Directory(dir) => {
-                println!("Added child to path '{}'", path);
+                //println!("Added child to path '{}'", path);
                 dir.add_child(name_id, node_id);
             }
             Node::File(_) => {
-                return Some(Error::InvalidPath("Cannot add to a file a file.".to_string()));
+                return Err(Error::InvalidPath("Cannot add to a file a file.".to_string()));
             }
         };
-        None 
+        Ok(node_id)
     }
     pub fn get_file_capacity(&self, file_id : u32) -> Result<usize, Error> {
         match &self.node_buffer[file_id as usize] {
@@ -162,7 +163,7 @@ impl Header{
     fn navigate(&self, path : &str) -> Result<u32,Error> {
         // println!("{}", path);
         let steps = string_helper::split_path(path);
-        println!("{:?}", steps);
+        //println!("{:?}", steps);
         if steps.len() == 0 {
             return Err(Error::EmptyPath("Provided an empty path".to_string()));
         }
@@ -177,7 +178,6 @@ impl Header{
             if node_ref.has_child_by_id(str_id) == false {
                 return Err(Error::InvalidPath("Provided an invalid path.".to_string()));
             }
-            println!("Valid"); 
             match node_ref {
                 Node::Directory(dir) => {
                     current_node = dir.name_child_map[&str_id];
@@ -188,7 +188,7 @@ impl Header{
             }
         }
         // let next_node = self.node_buffer;
-        println!("Navigated to node: {}", current_node);
+        //println!("Navigated to node: {}", current_node);
         Ok(current_node)
     }
 }
@@ -209,9 +209,9 @@ impl Serde for Header{
         res
     }
     fn deserialize(buffer : &mut &[u8]) -> Result<Self, Error>{ 
-        println!("{:?}", buffer);
+        //println!("{:?}", buffer);
         let list = deserialize_node_list(buffer)?;
-        println!("{:?}", buffer);
+        //println!("{:?}", buffer);
         let str_buf = StringBuffer::deserialize(buffer)?;
 
         Ok(

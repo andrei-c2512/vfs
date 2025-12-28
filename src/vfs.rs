@@ -3,37 +3,38 @@ use crate::directory::DirectoryData;
 use crate::file;
 use crate::inode::INode;
 use crate::util::date_time::DateTime;
-use crate::fs_base::Error;
 //use crate::string_buffer::StringBuffer;
 use crate::printer;
 use crate::traits::Serde;
 use crate::block_device::BlockDevice;
 use crate::ops;
+use crate::fs_base;
+use crate::fs_base::Error;
 
 use std::fs;
-use std::io::Write;
+use std::io::{Seek, Write,SeekFrom};
 use std::cell::RefCell;
 use std::rc::Rc;
 
+
 pub struct Vfs{
-    path : String,
     header : Rc<RefCell<Header>>, 
     block_device : Rc<RefCell<BlockDevice>>,
     file : Rc<RefCell<fs::File>>,
 }
 
 impl Vfs{
-    pub fn new(path : &str) -> Result<Self,Error>{        
-        let file = Self::open_file(path)?;
+    pub fn new(path : &str) -> Result<Self,fs_base::Error>{        
+        let file = Self::create_file(path)?;
         let shared_file = Rc::new(RefCell::new(file));
 
         Ok(
-            Self{ path : path.to_string(), 
+            Self{ 
                 header : Rc::new(RefCell::new(Header::new())), 
                 block_device : Rc::new(RefCell::new(BlockDevice::new())),
                 file : shared_file
             }
-            )
+        )
     }
     pub fn open(path : &str) -> Result<Self,Error>{
         // ell biggo letto listo
@@ -51,36 +52,47 @@ impl Vfs{
         let shared_file = Rc::new(RefCell::new(file));
 
 
-        Ok(Self{ path : path.to_string(), header : shared_header, block_device : shared_bd, file : shared_file})
+        Ok(Self{header : shared_header, block_device : shared_bd, file : shared_file})
     }
-    pub fn create_dir(&mut self, path : &str) -> Option<Error>{
+    pub fn create_dir(&mut self, path : &str) -> Result<ops::Directory, Error>{
         let (last_directive, path_to_directive) = self.split_from_cwd(path);
+        
+        let dir_id = {
+            let mut header_ref = self.header.borrow_mut();
+            let name_id = header_ref.str_buffer.add(last_directive);
+            let dir = DirectoryData::from(
+                INode::from(name_id, 0, DateTime::now(), DateTime::now(), 0), Vec::new()
+            ); 
 
-        let mut header_ref = self.header.borrow_mut();
-        let name_id = header_ref.str_buffer.add(last_directive);
-        let dir = DirectoryData::from(
-            INode::from(name_id, 0, DateTime::now(), DateTime::now(), 0), Vec::new()
-        ); 
+            let dir_id = match header_ref.add_node(path_to_directive, name_id, Node::Directory(dir)) {
+                Err(err) => { return Err(err); }
+                Ok(dir_id) => { dir_id }
+            };
+            dir_id
+        };
+        self.update_file();
 
-        return header_ref.add_node(path_to_directive, name_id, Node::Directory(dir));
+        Ok(ops::Directory::new())
     }
     pub fn create(&mut self, path : &str) -> Result<ops::File, Error> { 
         let (last_directive, path_to_directive) = self.split_from_cwd(path);
+        let file_id = {
+            let mut header_ref = self.header.borrow_mut();
+            let name_id = header_ref.str_buffer.add(last_directive);
+            let file : file::FileData = file::FileData::from(
+                INode::from(name_id, 0, DateTime::now(), DateTime::now(), 0), Vec::new()
+            ); 
 
-        let mut header_ref = self.header.borrow_mut();
-        let name_id = header_ref.str_buffer.add(last_directive);
-        let file : file::FileData = file::FileData::from(
-            INode::from(name_id, 0, DateTime::now(), DateTime::now(), 0), Vec::new()
-        ); 
-
-        let err = header_ref.add_node(path_to_directive, name_id, Node::File(file));
-        match err {
-            Some(err) => { return Err(err) }
-            _ => {}
-        };
+            let file_id = match header_ref.add_node(path_to_directive, name_id, Node::File(file)) {
+                Err(err) => { return Err(err); }
+                Ok(file_id) => { file_id }
+            };
+            file_id
+        }; 
+        self.update_file();
 
         Ok(
-            ops::File::from(0, self.header.clone(), self.block_device.clone(), self.file.clone())
+            ops::File::from(file_id, self.header.clone(), self.block_device.clone(), self.file.clone())
         )
     }
     
@@ -99,8 +111,15 @@ impl Vfs{
             _ => { return (&path[last_slash_ind + 1..], &path[..last_slash_ind]);}
         };
     }
-    fn open_file(path : &str) -> Result<fs::File, Error> {
-        match fs::File::open(path){
+    fn create_file(path : &str) -> Result<fs::File, Error> {
+        let res = fs::OpenOptions::new()
+            .write(true)
+            .read(true)
+            .truncate(true)
+            .create(true)
+            .open(path);
+
+        match res {
             Ok(file) => {
                 return Ok(file);
             }
@@ -109,11 +128,54 @@ impl Vfs{
             }
         };
     }
+    fn open_file(path : &str) -> Result<fs::File, Error> {
+        let res = fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .open(path);
+        match res {
+            Ok(file) => {
+                return Ok(file);
+            }
+            Err(err) => {
+                return Err(Error::FileOps(err.to_string()));
+            }
+        };
+    }
+    fn update_file(&mut self)  {
+        let mut data = self.header.borrow().serialize();
+        data.extend_from_slice(
+            &self.block_device.borrow().serialize()
+        );
+
+        {
+            // --- REWRITE: handle error(s)
+            let mut file_ref = self.file.borrow_mut(); 
+            match file_ref.seek(SeekFrom::Start(0u64)){
+                Ok(_) => {
+                }
+                Err(err) => {
+                    println!("Error in updating file: {}", err);
+                }
+            }
+            match file_ref.write_all(&data){
+                Ok(_) => {
+                }
+                Err(err) => {
+                    println!("Error in updating file: {}", err);
+                }
+            }
+        }
+
+        if data.len() < fs_base::HEADER_SIZE {
+            BlockDevice::append_header_filler(data.len(), self.file.clone());
+        }
+    }
 }
+
 
 impl Drop for Vfs{
     fn drop(&mut self){
-        let data = self.header.borrow().serialize();
-        self.file.borrow_mut().write_all(&data);
+        self.update_file();
     } 
 }

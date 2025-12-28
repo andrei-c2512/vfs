@@ -1,9 +1,8 @@
-use crate::fs_base::Error;
+use crate::fs_base::{Error,BLOCK_CAPACITY};
 use crate::traits::{Directive, Serde};
 use crate::string_buffer::StringBuffer;
 use crate::inode::INode;
 use crate::serde;
-use crate::block_device::BLOCK_CAPACITY;
 
 pub struct FileData{
     pub inode : INode,

@@ -24,8 +24,9 @@ impl File{
         match node {
             Node::File(file_data) => {
                 self.block_device.borrow_mut().write(buffer, &mut file_data.block_indices, self.vfs_file.clone());
+                file_data.inode.size = buffer.len();
             }
-            Node::Directory(dir) => {
+            Node::Directory(_) => {
             }
         }
         None
@@ -33,5 +34,23 @@ impl File{
     pub fn append(&self, bytes : &[u8]) -> Option<Error> {
 
         None
+    }
+    pub fn read_to_string(&mut self, data : &mut String){
+        let node = &mut self.header.borrow_mut().node_buffer[self.file_id as usize];        
+        match node {
+            Node::File(file_data) => {
+                self.block_device.borrow_mut().read(data, &file_data.block_indices, file_data.inode.size, self.vfs_file.clone());
+            }
+            Node::Directory(_) => {
+            }
+        }
+    }
+}
+
+pub struct Directory{
+}
+impl Directory {
+    pub fn new() -> Self{
+        Self{}
     }
 }

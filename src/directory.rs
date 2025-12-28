@@ -28,15 +28,15 @@ impl Serde for DirectoryData{
         res
     }
     fn deserialize(buffer : &mut &[u8]) -> Result<Self, Error>{
-        println!("{:?}", buffer);
-        println!("Size before deserializng inode: {}", buffer.len());
+        //println!("{:?}", buffer);
+        //println!("Size before deserializng inode: {}", buffer.len());
 
         let node = INode::deserialize(buffer)?;
-        println!("{:?}", buffer);
-        println!("Size before deserializng inode: {}", buffer.len());
+        //println!("{:?}", buffer);
+        //println!("Size before deserializng inode: {}", buffer.len());
         let block_indices = serde::deser_vec_u32(buffer)?; 
-        println!("{:?}", buffer);
-        println!("Size after deserializng inode: {}", buffer.len());
+        //println!("{:?}", buffer);
+        //println!("Size after deserializng inode: {}", buffer.len());
 
         Ok(DirectoryData::from(node, block_indices))
     }

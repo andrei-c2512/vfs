@@ -15,7 +15,7 @@ pub fn deser_u8(buffer : &mut &[u8]) -> Result<u8, Error>{
             return Ok(u8::from_be_bytes(*val));
         } ,
         Err(err) => { 
-            println!("Flopped u8");
+            //println!("Flopped u8");
             return Err(Error::BadDeser(err.to_string()))
         } 
     };
@@ -28,20 +28,20 @@ pub fn deser_u16(buffer : &mut &[u8]) -> Result<u16, Error>{
             return Ok(u16::from_be_bytes(*val));
         } ,
         Err(err) => { 
-            println!("Flopped u16");
+            //println!("Flopped u16");
             return Err(Error::BadDeser(err.to_string())) } 
     };
 }
 
 pub fn deser_u32(buffer : &mut &[u8]) -> Result<u32, Error>{ 
-    println!("Deserialising {:?}", buffer);
+    //println!("Deserialising {:?}", buffer);
     match &buffer[0..size_of::<u32>()].try_into() {
         Ok(val) => { 
             *buffer = &buffer[size_of::<u32>()..];
             return Ok(u32::from_be_bytes(*val));
         } ,
         Err(err) => {
-            println!("Flopped u32");
+            //println!("Flopped u32");
             return Err(Error::BadDeser(err.to_string())) } 
     };
 }
@@ -53,7 +53,7 @@ pub fn deser_usize(buffer : &mut &[u8]) -> Result<usize, Error>{
             return Ok(usize::from_be_bytes(*val));
         } ,
         Err(err) => {
-            println!("Flopped usize");
+            //println!("Flopped usize");
             return Err(Error::BadDeser(err.to_string())) } 
     };
 }
@@ -73,7 +73,7 @@ pub fn ser_vec_u32(vec : &Vec<u32>) -> Vec<u8> {
 
 pub fn deser_vec_u32(buffer : &mut &[u8]) -> Result<Vec<u32>, Error> {
     let capacity = deser_u32(buffer)?;
-    println!("Deserialising a list of {} u32's", capacity);
+    //println!("Deserialising a list of {} u32's", capacity);
     let mut res = Vec::with_capacity(capacity as usize);
 
     for _ in 0..capacity {

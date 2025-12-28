@@ -1,4 +1,3 @@
-use crate::serde;
 use crate::directory::DirectoryData;
 use crate::inode::INode;
 use crate::util::date_time::DateTime;
@@ -6,11 +5,10 @@ use crate::traits::Serde;
 use crate::string_buffer::StringBuffer;
 use crate::printer;
 
-use std::collections::HashMap;
 
 pub fn directory_serde(){
     let children = vec![10, 23, 11, 14];
-    let mut dir = DirectoryData::from(
+    let dir = DirectoryData::from(
         INode::from(3, 10, DateTime::now(), DateTime::now(), 100), children
     );
 

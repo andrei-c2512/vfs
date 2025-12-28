@@ -14,7 +14,6 @@ pub mod ops;
 pub mod block_device;
 
 use crate::vfs::Vfs;
-use crate::directory::DirectoryData;
 
 fn create_test(){
     let mut vfs = match Vfs::new("test.vfs"){
@@ -27,23 +26,29 @@ fn create_test(){
     let paths = [ "@/etc", "@/etc/conf", "@/etc/tmp", "@/etc/tmp/p2", "@/etc/tmp/p3", "@/etc/work" ];
     for path in paths {
         match vfs.create_dir(path){
-            Some(err) => {
+            Err(err) => {
                 println!("Error: {}" , err);
             }
-            None => {
+            Ok(_) => {
             }
         }
     }
 
+    //let file_paths = [ "@/etc/file.txt"];
     let file_paths = [ "@/etc/file.txt", "@/etc/tmp/file2.txt", "@/etc/work/file.txt" ];
 
     for path in file_paths {
-        match vfs.create(path){
+        let mut res = vfs.create(path);
+        match &mut res{
             Err(err) => {
                 println!("Error: {}" , err);
             }
             Ok(file)=> {
-                // write some data, idk
+                let buf = ['$' as u8;100];
+                file.write_all(&buf);
+                let mut data = String::new();
+                file.read_to_string(&mut data);
+                println!("Printing file contents:\n{}", data);
             }
         }
     }
@@ -58,14 +63,10 @@ fn read_test() {
     vfs.print(); 
 }
 
-fn advance(sl : &mut &[u8]) {
-    *sl = &sl[2..];
-}
 
 fn main() {
     //test::directory_serde();
     //test::string_buffer_serde();
-    //read_test();
     create_test();
-    
+    read_test(); 
 }
