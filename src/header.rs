@@ -154,13 +154,21 @@ impl Header{
             }
         }
     }
-    
+    /*
+    pub fn try_to_get_entries(&self, path : &str) -> Result<Vec<u32>, Error>{
+        let node_id = self.navigate(path)?;
+        let node = &self.node_buffer[node_id as usize];        
+        
+        match node {
+        };
+    }
+    */ 
     fn push_node(&mut self, n : Node) -> u32{
         let id = self.node_buffer.len();
         self.node_buffer.push(n);
         id as u32
     }
-    fn navigate(&self, path : &str) -> Result<u32,Error> {
+    pub fn navigate(&self, path : &str) -> Result<u32,Error> {
         // println!("{}", path);
         let steps = string_helper::split_path(path);
         //println!("{:?}", steps);

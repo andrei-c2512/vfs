@@ -61,7 +61,7 @@ pub fn deser_usize(buffer : &mut &[u8]) -> Result<usize, Error>{
 /* END PLS MODIFY THIS IT S SO SO UGLY */
 
 
-pub fn ser_vec_u32(vec : &Vec<u32>) -> Vec<u8> {
+pub fn ser_vec_u32(vec : &[u32]) -> Vec<u8> {
     // +1 because the front is gonna be the length of the list
     let mut res = Vec::with_capacity(size_of::<u32>() * (vec.len() + 1));
     res.extend_from_slice(&(vec.len() as u32).to_be_bytes()); 

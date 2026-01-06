@@ -34,14 +34,14 @@ impl StringBuffer{
         
         match self.name_map.get(name) {
             Some(id) => {
-                return *id;
+                *id
             }
             None => {
                 self.string_list.push(name.to_string());
                 self.name_map.insert(name.to_string(), self.next_index);
                 let copy = self.next_index;
                 self.next_index += 1;
-                return copy;
+                copy
             }
         }
     }

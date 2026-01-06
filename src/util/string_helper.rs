@@ -9,3 +9,7 @@ pub fn split_path(path : &str) -> Vec<String>{
     result
 }
 
+pub fn fmt_file_error(message : &str, path : &str) -> String{
+    format!("{} : '{}'", message, path)
+}
+

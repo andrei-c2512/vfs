@@ -15,6 +15,7 @@ pub const MAX_PROCESS_CAPACITY : usize= BLOCK_CAPACITY * 2;
 /* 8kb for header */
 pub const HEADER_SIZE : usize = 1024 * 1;
 
+#[derive(Debug)]
 pub enum Error{
     InvalidPreamble(String),
     InvalidStringBuffer(String),
@@ -24,6 +25,7 @@ pub enum Error{
     BadDeser(String),
     Unreachable(String),
     FileOps(String),
+    BadCall(String),
 }
 
 
@@ -40,6 +42,7 @@ impl fmt::Display for Error{
             Error::BadDeser(e) => write!(f, "Deserialization error: {}", e),
             Error::Unreachable(e) => write!(f, "Encountered unreachable code: {}", e),
             Error::FileOps(e) => write!(f, "File operation error: {}", e),
+            Error::BadCall(e) => write!(f, "Bad call: {}", e),
         }
     }
 }

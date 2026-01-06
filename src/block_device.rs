@@ -28,15 +28,16 @@ impl BlockDevice{
         Self{free_blocks : free_blocks, buffer : Vec::new(), num_blocks : num_blocks}
     }
     // this function does not do any release build bounds checking!!!
-    pub fn read(&mut self, data : &mut String, block_indices : &Vec<u32>, size : usize, file : Rc<RefCell<fs::File>>){
+    pub fn read_to_string(&mut self, data : &mut String, block_indices : &Vec<u32>, size : usize, file : Rc<RefCell<fs::File>>){
        assert!(size <= block_indices.len() * fs_base::BLOCK_CAPACITY);
-       println!("Reading {} bytes", size);
 
        let mut left_to_read = size;
        for block_id in block_indices.iter() { 
            let to_read = min(left_to_read, fs_base::BLOCK_CAPACITY);
            self.load_block(*block_id, file.clone(), to_read);
            // --- REWRITE: Find a solution with less copies. This is so fuckin ass. Why can t I just check if it's utf8 without copies?
+           // edit: Since I already do buffered reading, maybe have a String buffer instead of a
+           // byte buffer ?
            let string_block = String::from_utf8(self.buffer.clone()).unwrap();
            data.push_str(&string_block);
            left_to_read -= to_read;
@@ -46,7 +47,22 @@ impl BlockDevice{
            }
        }
     }
-    pub fn write(&self, buffer :  &[u8], block_indices : &mut Vec<u32>, file : Rc<RefCell<fs::File>>) {
+    pub fn read(&mut self, data : &mut Vec<u8>, block_indices : &Vec<u32>, size : usize, file : Rc<RefCell<fs::File>>) {
+       assert!(size <= block_indices.len() * fs_base::BLOCK_CAPACITY);
+
+       let mut left_to_read = size;
+       for block_id in block_indices.iter() { 
+           let to_read = min(left_to_read, fs_base::BLOCK_CAPACITY);
+           self.load_block(*block_id, file.clone(), to_read);
+           data.extend_from_slice(&self.buffer);
+           left_to_read -= to_read;
+
+           if left_to_read == 0 {
+               break;
+           }
+       }
+    }
+    pub fn write(&mut self, buffer :  &[u8], block_indices : &mut Vec<u32>, file : Rc<RefCell<fs::File>>) {
         // --- REWRITE: the header size should be expandable, not hardcoded
         let header_offset = fs_base::HEADER_SIZE;
 
@@ -70,9 +86,10 @@ impl BlockDevice{
 
         if buffer.len() > 0 {
             let new_blocks = &Self::append(buffer, file.clone());
-            for i in self.num_blocks..(*new_blocks) {
-                block_indices.push(i);
+            for i in 0..(*new_blocks) {
+                block_indices.push(i + self.num_blocks);
             }
+            self.num_blocks += new_blocks; 
         }
     }     
     // returns the number of blocks that been appended to the file
@@ -105,9 +122,6 @@ impl BlockDevice{
             }
             Ok(()) => {}
         }
-
-
-        println!("Loaded block: {:?}", self.buffer);
     }
     fn buffer_in_blocks(buffer : &[u8]) -> u32{
         let mut blocks = buffer.len() / fs_base::BLOCK_CAPACITY;
@@ -131,10 +145,7 @@ impl BlockDevice{
         }
     }
     pub fn append_header_filler(buffer_len : usize, file : Rc<RefCell<fs::File>>){
-
         let remainder = fs_base::HEADER_SIZE - buffer_len - fs_base::HEADER_TAIL.len(); 
-        println!("REMAINDER: {}" ,remainder);
-        println!("HEADER: {}", buffer_len);
         if remainder == 0 { return; }
 
         let blank = vec!['-' as u8; remainder];

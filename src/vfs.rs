@@ -10,6 +10,7 @@ use crate::block_device::BlockDevice;
 use crate::ops;
 use crate::fs_base;
 use crate::fs_base::Error;
+use crate::util::string_helper;
 
 use std::fs;
 use std::io::{Seek, Write,SeekFrom};
@@ -48,16 +49,30 @@ impl Vfs{
         let block_device = BlockDevice::deserialize(slice)?;
         let shared_bd = Rc::new(RefCell::new(block_device));
 
-        let file = Self::open_file(path)?;
+        let file = Self::open_os_file(path)?;
         let shared_file = Rc::new(RefCell::new(file));
 
 
         Ok(Self{header : shared_header, block_device : shared_bd, file : shared_file})
     }
+    pub fn read_dir(&self, path : &str) -> Result<Vec<u32>, Error>{ 
+        let header_ref = self.header.borrow_mut();
+        let node_id = header_ref.navigate(path)?;
+        let node = &header_ref.node_buffer[node_id as usize];        
+            
+        match node{
+            Node::Directory(dir_data) => {
+                return Ok(dir_data.children.clone());
+            }
+            Node::File(_) => {
+                return Err(Error::BadCall("Attempted to call read_dir on a file".to_string()));
+            }
+        }
+    }
     pub fn create_dir(&mut self, path : &str) -> Result<ops::Directory, Error>{
         let (last_directive, path_to_directive) = self.split_from_cwd(path);
         
-        let dir_id = {
+        let _dir_id = {
             let mut header_ref = self.header.borrow_mut();
             let name_id = header_ref.str_buffer.add(last_directive);
             let dir = DirectoryData::from(
@@ -70,7 +85,7 @@ impl Vfs{
             };
             dir_id
         };
-        self.update_file();
+        self.update_os_file();
 
         Ok(ops::Directory::new())
     }
@@ -89,13 +104,69 @@ impl Vfs{
             };
             file_id
         }; 
-        self.update_file();
+        self.update_os_file();
 
         Ok(
             ops::File::from(file_id, self.header.clone(), self.block_device.clone(), self.file.clone())
         )
     }
-    
+    pub fn open_file(&self, path : &str) -> Result<ops::File, Error> {
+        let header_ref = self.header.borrow_mut();
+        let node_id = header_ref.navigate(path)?;
+        let node = &header_ref.node_buffer[node_id as usize];        
+            
+        match node{
+            Node::Directory(_) => {
+                return Err(Error::BadCall("Attempted to call open_file on a directory".to_string()));
+            }
+            Node::File(_) => {
+                return Ok(
+                    ops::File::from(node_id, self.header.clone(), self.block_device.clone(), self.file.clone())
+                    );
+            }
+        }
+    }
+    pub fn open_entry(&self, entry : u32) -> Result<ops::File, Error> {
+        let header_ref = self.header.borrow_mut();
+        let node_id = entry;
+        let node = &header_ref.node_buffer[node_id as usize];        
+            
+        match node{
+            Node::Directory(_) => {
+                return Err(Error::BadCall("Attempted to call open_file on a directory".to_string()));
+            }
+            Node::File(_) => {
+                return Ok(
+                    ops::File::from(node_id, self.header.clone(), self.block_device.clone(), self.file.clone())
+                    );
+            }
+        }
+    }
+    // testing for < 10MB files
+    pub fn copy_into_vfs(&mut self, path : &str, vfs_path : &str) -> Result<(), Error> {
+        let bytes = match fs::read(path){
+            Ok(bytes) => { bytes}
+            // --- RETHINK: 
+            // hope it is not confusing for me later on as to if it's vfs path or my system path
+            // may need to create a seperate error
+            Err(err) => { return Err(Error::FileOps(string_helper::fmt_file_error(&err.to_string(), path))); } 
+        };
+        
+        let mut vfs_file = self.create(vfs_path)?;
+        vfs_file.write_all(&bytes);
+        Ok(())
+    }
+    // I want to let the user dictate the flags of the copying
+    pub fn copy_from_vfs(&mut self, vfs_path : &str, os_file : &mut fs::File) -> Result<(), Error> {
+        let mut file = self.open_file(vfs_path)?;
+        let mut data = Vec::new();
+        file.read(&mut data);
+
+        match os_file.write(&data) {
+            Ok(_) => { return Ok(());} 
+            Err(err) => { return Err(Error::FileOps(err.to_string())); }
+        };
+    }
     pub fn print(&self) {
         let header = self.header.borrow();
         printer::print_header(&header);
@@ -128,42 +199,33 @@ impl Vfs{
             }
         };
     }
-    fn open_file(path : &str) -> Result<fs::File, Error> {
+    fn open_os_file(path : &str) -> Result<fs::File, Error> {
         let res = fs::OpenOptions::new()
             .read(true)
             .write(true)
             .open(path);
         match res {
             Ok(file) => {
-                return Ok(file);
+                Ok(file)
             }
             Err(err) => {
-                return Err(Error::FileOps(err.to_string()));
+                Err(Error::FileOps(err.to_string()))
             }
-        };
+        }
     }
-    fn update_file(&mut self)  {
+    fn update_os_file(&mut self)  {
         let mut data = self.header.borrow().serialize();
         data.extend_from_slice(
             &self.block_device.borrow().serialize()
         );
-
         {
             // --- REWRITE: handle error(s)
             let mut file_ref = self.file.borrow_mut(); 
-            match file_ref.seek(SeekFrom::Start(0u64)){
-                Ok(_) => {
-                }
-                Err(err) => {
+            if let Err(err) = file_ref.seek(SeekFrom::Start(0u64)){
+                println!("Error in updating file: {}", err);
+            } 
+            if let Err(err) = file_ref.write_all(&data){
                     println!("Error in updating file: {}", err);
-                }
-            }
-            match file_ref.write_all(&data){
-                Ok(_) => {
-                }
-                Err(err) => {
-                    println!("Error in updating file: {}", err);
-                }
             }
         }
 
@@ -176,6 +238,6 @@ impl Vfs{
 
 impl Drop for Vfs{
     fn drop(&mut self){
-        self.update_file();
+        self.update_os_file();
     } 
 }
