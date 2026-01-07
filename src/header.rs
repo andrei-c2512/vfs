@@ -16,7 +16,7 @@ pub enum Node{
 }
 
 impl Directive for Node{
-     fn has_child(&self, str_buf : &StringBuffer, s : &String) -> bool{
+     fn has_child(&self, str_buf : &StringBuffer, s : &str) -> bool{
          match self {
              Node::Directory(dir) => {
                  dir.has_child(str_buf, s)
@@ -77,7 +77,7 @@ impl Serde for Node {
     } 
 }
 
-fn serialize_node_list(list : &Vec<Node>) -> Vec<u8>{
+fn serialize_node_list(list : &[Node]) -> Vec<u8>{
     let mut res = Vec::new();
     res.extend_from_slice(
         &(list.len() as u32).to_be_bytes()
@@ -113,16 +113,14 @@ pub struct Header{
 
 impl Header{
     pub fn new() -> Self{
-        let mut node_buffer = Vec::new();
-        node_buffer.push(Node::Directory(DirectoryData::new()));
+        let node_buffer = vec![Node::Directory(DirectoryData::new())];
+        let mut str_buffer= StringBuffer::new();
+        str_buffer.add("@");
 
-        let mut str_buf = StringBuffer::new();
-        str_buf.add("@");
-
-        Self{ node_buffer : node_buffer, str_buffer : str_buf }
+        Self{ node_buffer, str_buffer }
     }
     pub fn from(node_buffer : Vec<Node>, str_buffer : StringBuffer) -> Self{
-        Self{ node_buffer : node_buffer, str_buffer : str_buffer }
+        Self{ node_buffer, str_buffer }
     }
     // returns the ID of the newly added node
     pub fn add_node(&mut self, path : &str, name_id : u32, n : Node) -> Result<u32, Error>{
@@ -172,7 +170,7 @@ impl Header{
         // println!("{}", path);
         let steps = string_helper::split_path(path);
         //println!("{:?}", steps);
-        if steps.len() == 0 {
+        if steps.is_empty() {
             return Err(Error::EmptyPath("Provided an empty path".to_string()));
         }
 
@@ -228,5 +226,9 @@ impl Serde for Header{
     }
 }
 
-
+impl Default for Header{
+    fn default() -> Self{
+        Self::new()
+    }
+}
 

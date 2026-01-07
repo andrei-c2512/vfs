@@ -122,7 +122,7 @@ impl BlockDevice{
     }
     fn buffer_in_blocks(buffer : &[u8]) -> u32{
         let mut blocks = buffer.len() / fs_base::BLOCK_CAPACITY;
-        if buffer.len().is_multiple_of(fs_base::BLOCK_CAPACITY) {
+        if !buffer.len().is_multiple_of(fs_base::BLOCK_CAPACITY) {
             blocks += 1;
         }
         blocks as u32

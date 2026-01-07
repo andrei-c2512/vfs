@@ -33,7 +33,13 @@ impl Time{
         }
     }
     pub fn from(hour : u8, minute : u8, second : u8) -> Self{
-        Self{hour : hour, minute : minute, second : second} 
+        Self{hour, minute, second} 
+    }
+}
+
+impl Default for Time{
+    fn default() -> Self{
+        Self::new()
     }
 }
 
@@ -63,10 +69,15 @@ impl Date{
         }
     }
     pub fn from(year : u16, month : u8, day : u8) -> Self{
-        Self{year : year, month : month, day : day}
+        Self{year, month, day}
     }
 }
 
+impl Default for Date{
+    fn default() -> Self{
+        Self::new()
+    }
+}
 #[derive(PartialEq, Eq)]
 pub struct DateTime{
     pub date : Date,
@@ -81,6 +92,12 @@ impl DateTime{
         Self{ date : Date::now(), time : Time::now()} 
     }
     pub fn from(date : Date, time : Time) -> Self{
-        Self{date : date, time : time}
+        Self{date, time}
+    }
+}
+
+impl Default for DateTime{
+    fn default() -> Self{
+        Self::new()
     }
 }

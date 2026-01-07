@@ -17,10 +17,10 @@ impl StringBuffer{
     pub fn new() -> Self{
        Self{name_map : HashMap::new(), serialization_size : 0, next_index : 0, string_list : Vec::new()} 
     }
-    pub fn from(name_map0 : HashMap<String, u32>, serialization_size0 : u32, next_index0 : u32, string_list : Vec<String>) -> Self{
-        Self{name_map : name_map0, serialization_size : serialization_size0, next_index : next_index0, string_list : string_list}
+    pub fn from(name_map : HashMap<String, u32>, serialization_size : u32, next_index : u32, string_list : Vec<String>) -> Self{
+        Self{name_map , serialization_size , next_index , string_list}
     }
-    pub fn get(&self, s : &String) -> Result<u32, Error>{
+    pub fn get(&self, s : &str) -> Result<u32, Error>{
        match self.name_map.get(s) {
             Some(num) => { Ok(*num) }
             None => {
@@ -69,19 +69,18 @@ impl StringBuffer{
 
     fn deser_str(buffer : &[u8], length : usize) -> Result<String, Error> {
         let bytes_opt = buffer.get(0..length);
-        if bytes_opt == None {
+        if bytes_opt.is_none() {
             return Err(
                 Error::InvalidStringBuffer("Did no provide the correct number of bytes for the string".to_string()));
         }
         match String::from_utf8(bytes_opt.unwrap().to_vec()){
             Ok(res) => {
-                return Ok(res);
+                Ok(res)
             }
-
             Err(err) => {
-                return Err(Error::InvalidStringBuffer(err.to_string()))
+                Err(Error::InvalidStringBuffer(err.to_string()))
             }
-        };
+        }
     }
 }
 
@@ -110,7 +109,7 @@ impl Serde for StringBuffer{
         let serialization_size = 0 ;
         let mut next_index = 0;
 
-        if buffer.starts_with(STRING_BUFFER_PREAMBLE.as_bytes()) == false {
+        if !buffer.starts_with(STRING_BUFFER_PREAMBLE.as_bytes()) {
             return Err(Error::InvalidPreamble("Did not find the preamble specific to the string buffer".to_string()));
         }
 
@@ -139,6 +138,12 @@ impl Serde for StringBuffer{
         Ok(
             StringBuffer::from(name_map, serialization_size, next_index, string_list)
         )
+    }
+}
+
+impl Default for StringBuffer{
+    fn default() -> Self{
+        Self::new()
     }
 }
 

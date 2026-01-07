@@ -45,7 +45,7 @@ impl Serde for DirectoryData{
 
 impl Directive for DirectoryData{
     // returns none on valid string
-    fn has_child(&self, str_buf : &StringBuffer, s : &String) -> bool{
+    fn has_child(&self, str_buf : &StringBuffer, s : &str) -> bool{
         let str_id = str_buf.get(s);
         if let Ok(id) = str_id {
             return self.has_child_by_id(id);
@@ -54,28 +54,27 @@ impl Directive for DirectoryData{
         false
     }
     fn has_child_by_id(&self, name_id : u32) -> bool{
-        if self.name_child_map.contains_key(&name_id) == true {
-            true
-        }else{
-            false
-        }
+        self.name_child_map.contains_key(&name_id)
     }
 }
 
 impl DirectoryData{
-    pub fn default() -> Self{
-        Self::new()
-    }
     pub fn new() -> Self{
         Self{inode : INode::new(), children : Vec::new(), name_child_map : HashMap::new() }
     }
     pub fn from(n : INode, children : Vec<u32>) -> Self{
-        Self{inode : n, children : children, name_child_map : HashMap::new()}
+        Self{inode : n, children, name_child_map : HashMap::new()}
     }
 
     pub fn add_child(&mut self, name_id : u32, node_id : u32){
         self.name_child_map.insert(name_id, node_id);
         self.children.push(node_id);
+    }
+}
+
+impl Default for DirectoryData{
+    fn default() -> Self{
+        Self::new()
     }
 }
 

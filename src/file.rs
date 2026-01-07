@@ -16,7 +16,7 @@ impl FileData{
     }
     pub fn capacity(&self) -> usize{
         // may change in the future
-        return self.block_indices.len() * BLOCK_CAPACITY;
+        self.block_indices.len() * BLOCK_CAPACITY
     }
 }
 
@@ -42,7 +42,7 @@ impl Serde for FileData{
 }
 
 impl Directive for FileData {
-    fn has_child(&self, _str_buf : &StringBuffer, _s : &String) -> bool{
+    fn has_child(&self, _str_buf : &StringBuffer, _s : &str) -> bool{
         false
     }
     fn has_child_by_id(&self, _id : u32) -> bool{

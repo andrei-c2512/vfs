@@ -96,6 +96,8 @@ fn size_test_3mb() -> Result<(), Error> {
 
     let mut file = match fs::OpenOptions::new()
         .truncate(true)
+        .write(true)
+        .read(true)
         .open(input_os_file) {
         Ok(file) => {file }
         Err(err) => { return Err(
@@ -115,6 +117,8 @@ fn size_test_12mb() -> Result<(), Error> {
 
     let mut file = match fs::OpenOptions::new()
         .truncate(true)
+        .read(true)
+        .write(true)
         .open(input_os_file) {
         Ok(file) => {file }
         Err(err) => { return Err(
@@ -144,11 +148,11 @@ fn test_2() -> Result<(), Error> {
         }
     }
     
-    for i in 0..vfs_files.len() {
-        let mut f = vfs.open_file(vfs_files[i])?;
+    for path in vfs_files.iter() {
+        let mut f = vfs.open_file(path)?;
         let mut data = String::new();
         f.read_to_string(&mut data);
-        println!("Result of reading file '{}': {:?}", vfs_files[i], data);
+        println!("Result of reading file '{}': {:?}", path, data);
     }
 
 
@@ -172,6 +176,8 @@ fn test_3() -> Result<(), Error> {
 
     let mut file = match fs::OpenOptions::new()
         .truncate(true)
+        .write(true)
+        .read(true)
         .open("output/background.jpeg") {
         Ok(file) => {file }
         Err(err) => { return Err(
@@ -206,6 +212,8 @@ fn test_4() -> Result<(), Error>{
 
     let mut file = match fs::OpenOptions::new()
         .truncate(true)
+        .read(true)
+        .write(true)
         .open("output/background_test4.jpeg") {
         Ok(file) => {file }
         Err(err) => { return Err(

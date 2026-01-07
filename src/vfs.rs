@@ -79,11 +79,10 @@ impl Vfs{
                 INode::from(name_id, 0, DateTime::now(), DateTime::now(), 0), Vec::new()
             ); 
 
-            let dir_id = match header_ref.add_node(path_to_directive, name_id, Node::Directory(dir)) {
+            match header_ref.add_node(path_to_directive, name_id, Node::Directory(dir)) {
                 Err(err) => { return Err(err); }
                 Ok(dir_id) => { dir_id }
-            };
-            dir_id
+            }
         };
         self.update_os_file();
 
@@ -162,8 +161,8 @@ impl Vfs{
         file.read(&mut data);
 
         match os_file.write(&data) {
-            Ok(_) => { Ok(()) } 
             Err(err) => { Err(Error::FileOps(err.to_string())) }
+            _ => { Ok(()) } 
         }
     }
     pub fn print(&self) {

@@ -13,7 +13,7 @@ pub const BLOCK_CAPACITY : usize = 8 * 4;
 pub const MAX_PROCESS_CAPACITY : usize= BLOCK_CAPACITY * 2;
 
 /* 8kb for header */
-pub const HEADER_SIZE : usize = 1024 * 1;
+pub const HEADER_SIZE : usize = 1024;
 
 #[derive(Debug)]
 pub enum Error{
