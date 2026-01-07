@@ -25,10 +25,10 @@ impl BlockDevice{
         Self{free_blocks : Vec::new(), buffer : Vec::new(), num_blocks : 0u32}
     }
     pub fn from(free_blocks : Vec<u32>, num_blocks : u32) -> Self{
-        Self{free_blocks : free_blocks, buffer : Vec::new(), num_blocks : num_blocks}
+        Self{free_blocks, buffer : Vec::new(), num_blocks}
     }
     // this function does not do any release build bounds checking!!!
-    pub fn read_to_string(&mut self, data : &mut String, block_indices : &Vec<u32>, size : usize, file : Rc<RefCell<fs::File>>){
+    pub fn read_to_string(&mut self, data : &mut String, block_indices : &[u32], size : usize, file : Rc<RefCell<fs::File>>){
        assert!(size <= block_indices.len() * fs_base::BLOCK_CAPACITY);
 
        let mut left_to_read = size;
@@ -47,7 +47,7 @@ impl BlockDevice{
            }
        }
     }
-    pub fn read(&mut self, data : &mut Vec<u8>, block_indices : &Vec<u32>, size : usize, file : Rc<RefCell<fs::File>>) {
+    pub fn read(&mut self, data : &mut Vec<u8>, block_indices : &[u32], size : usize, file : Rc<RefCell<fs::File>>) {
        assert!(size <= block_indices.len() * fs_base::BLOCK_CAPACITY);
 
        let mut left_to_read = size;
@@ -69,7 +69,7 @@ impl BlockDevice{
         let mut slice = buffer;
         for index in block_indices.iter() {
             let mut file_ref = file.borrow_mut();
-            if buffer.len() == 0 {
+            if buffer.is_empty() {
                 return;
             }
             // --- REWRITE: handle this error
@@ -84,7 +84,7 @@ impl BlockDevice{
             let _ = file_ref.write_all(to_write);
         }
 
-        if buffer.len() > 0 {
+        if !buffer.is_empty(){
             let new_blocks = &Self::append(buffer, file.clone());
             for i in 0..(*new_blocks) {
                 block_indices.push(i + self.num_blocks);
@@ -116,26 +116,23 @@ impl BlockDevice{
         let mut file_ref = file.borrow_mut();
         // --- REWRITE: Handle errors vro
         let _ = file_ref.seek(SeekFrom::Start((fs_base::HEADER_SIZE + index as usize * fs_base::BLOCK_CAPACITY) as u64));
-        match file_ref.read_exact(&mut self.buffer){
-            Err(err) => {
-                println!("Error in loading block: {}", err);
-            }
-            Ok(()) => {}
+        if let Err(err) = file_ref.read_exact(&mut self.buffer){
+            println!("Error in loading block: {}", err);
         }
     }
     fn buffer_in_blocks(buffer : &[u8]) -> u32{
         let mut blocks = buffer.len() / fs_base::BLOCK_CAPACITY;
-        if buffer.len() % fs_base::BLOCK_CAPACITY != 0 {
+        if buffer.len().is_multiple_of(fs_base::BLOCK_CAPACITY) {
             blocks += 1;
         }
-        return blocks as u32;
+        blocks as u32
     }
 
     pub fn append_block_remainder(buffer_len : usize, file : Rc<RefCell<fs::File>>){
         let remainder = fs_base::BLOCK_CAPACITY - buffer_len % fs_base::BLOCK_CAPACITY; 
         if remainder == 0 { return; }
 
-        let blank = vec!['_' as u8; remainder];
+        let blank = vec![b'_'; remainder];
 
         // --- REWRITE: handle this error vro
         {
@@ -148,7 +145,7 @@ impl BlockDevice{
         let remainder = fs_base::HEADER_SIZE - buffer_len - fs_base::HEADER_TAIL.len(); 
         if remainder == 0 { return; }
 
-        let blank = vec!['-' as u8; remainder];
+        let blank = vec![b'-'; remainder];
 
 
         // --- REWRITE: handle this error vro
@@ -191,7 +188,7 @@ impl Serde for BlockDevice {
         res
     }
     fn deserialize(buffer : &mut &[u8]) -> Result<Self, Error>{
-        if buffer.starts_with(fs_base::BLOCK_DEVICE_PREAMBLE.as_bytes()) == false {
+        if !buffer.starts_with(fs_base::BLOCK_DEVICE_PREAMBLE.as_bytes()) {
             return Err(Error::InvalidPreamble("Did not find the preamble for block device".to_string()));
         }
         *buffer = &buffer[fs_base::BLOCK_DEVICE_PREAMBLE.len()..];
@@ -199,5 +196,10 @@ impl Serde for BlockDevice {
         let n_blocks = serde::deser_u32(buffer)?;
         
         Ok(BlockDevice::from(free_blocks, n_blocks))
+    }
+}
+impl Default for BlockDevice{
+    fn default() -> Self{
+        Self::new()
     }
 }

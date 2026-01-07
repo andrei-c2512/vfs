@@ -63,6 +63,9 @@ impl Directive for DirectoryData{
 }
 
 impl DirectoryData{
+    pub fn default() -> Self{
+        Self::new()
+    }
     pub fn new() -> Self{
         Self{inode : INode::new(), children : Vec::new(), name_child_map : HashMap::new() }
     }

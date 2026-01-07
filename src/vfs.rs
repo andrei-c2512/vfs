@@ -62,10 +62,10 @@ impl Vfs{
             
         match node{
             Node::Directory(dir_data) => {
-                return Ok(dir_data.children.clone());
+                Ok(dir_data.children.clone())
             }
             Node::File(_) => {
-                return Err(Error::BadCall("Attempted to call read_dir on a file".to_string()));
+                Err(Error::BadCall("Attempted to call read_dir on a file".to_string()))
             }
         }
     }
@@ -98,11 +98,10 @@ impl Vfs{
                 INode::from(name_id, 0, DateTime::now(), DateTime::now(), 0), Vec::new()
             ); 
 
-            let file_id = match header_ref.add_node(path_to_directive, name_id, Node::File(file)) {
+            match header_ref.add_node(path_to_directive, name_id, Node::File(file)) {
                 Err(err) => { return Err(err); }
                 Ok(file_id) => { file_id }
-            };
-            file_id
+            }
         }; 
         self.update_os_file();
 
@@ -117,12 +116,12 @@ impl Vfs{
             
         match node{
             Node::Directory(_) => {
-                return Err(Error::BadCall("Attempted to call open_file on a directory".to_string()));
+                Err(Error::BadCall("Attempted to call open_file on a directory".to_string()))
             }
             Node::File(_) => {
-                return Ok(
+                Ok(
                     ops::File::from(node_id, self.header.clone(), self.block_device.clone(), self.file.clone())
-                    );
+                    )
             }
         }
     }
@@ -133,12 +132,12 @@ impl Vfs{
             
         match node{
             Node::Directory(_) => {
-                return Err(Error::BadCall("Attempted to call open_file on a directory".to_string()));
+                Err(Error::BadCall("Attempted to call open_file on a directory".to_string()))
             }
             Node::File(_) => {
-                return Ok(
+                Ok(
                     ops::File::from(node_id, self.header.clone(), self.block_device.clone(), self.file.clone())
-                    );
+                )
             }
         }
     }
@@ -163,9 +162,9 @@ impl Vfs{
         file.read(&mut data);
 
         match os_file.write(&data) {
-            Ok(_) => { return Ok(());} 
-            Err(err) => { return Err(Error::FileOps(err.to_string())); }
-        };
+            Ok(_) => { Ok(()) } 
+            Err(err) => { Err(Error::FileOps(err.to_string())) }
+        }
     }
     pub fn print(&self) {
         let header = self.header.borrow();
@@ -178,9 +177,9 @@ impl Vfs{
         let last_slash_ind = path.rfind('/').unwrap_or(0);
         println!("{}", last_slash_ind);
         match last_slash_ind {
-            0 => { return (path, path); }
-            _ => { return (&path[last_slash_ind + 1..], &path[..last_slash_ind]);}
-        };
+            0 => { (path, path) }
+            _ => { (&path[last_slash_ind + 1..], &path[..last_slash_ind])}
+        }
     }
     fn create_file(path : &str) -> Result<fs::File, Error> {
         let res = fs::OpenOptions::new()
@@ -192,12 +191,12 @@ impl Vfs{
 
         match res {
             Ok(file) => {
-                return Ok(file);
+                Ok(file)
             }
             Err(err) => {
-                return Err(Error::FileOps(err.to_string()));
+                Err(Error::FileOps(err.to_string()))
             }
-        };
+        }
     }
     fn open_os_file(path : &str) -> Result<fs::File, Error> {
         let res = fs::OpenOptions::new()

@@ -17,10 +17,15 @@ impl INode{
         Self{name_id : 0 , permissions : 0, created_at : DateTime::now(), last_modified : DateTime::now(), size : 0}
     }
     pub fn from(name_id : u32, perms : Permissions, created_at : DateTime, last_modified : DateTime, size : usize) -> Self{
-        Self{ name_id : name_id, permissions : perms, created_at : created_at, last_modified : last_modified, size : size}
+        Self{ name_id, permissions : perms, created_at , last_modified , size }
     }
 }
 
+impl Default for INode{
+    fn default() -> Self{
+        Self::new()
+    }
+}
 impl Serde for INode{
     fn serialize(&self) -> Vec<u8>{
         let mut result :Vec<u8> = Vec::new();

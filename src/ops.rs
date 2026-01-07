@@ -17,7 +17,7 @@ pub struct File{
 
 impl File{
     pub fn from(file_id : u32, header : Rc<RefCell<Header>>, block_device : Rc<RefCell<BlockDevice>>, vfs_file : Rc<RefCell<fs::File>>) -> Self{
-        Self { file_id : file_id, header : header, block_device : block_device , vfs_file : vfs_file }
+        Self { file_id , header , block_device , vfs_file }
     }
     pub fn write_all(&mut self, buffer : &[u8]) -> Option<Error>{
         let node = &mut self.header.borrow_mut().node_buffer[self.file_id as usize];        
@@ -68,6 +68,12 @@ pub struct Directory{
 impl Directory {
     pub fn new() -> Self{
         Self{}
+    }
+}
+
+impl Default for Directory{
+    fn default() -> Self{
+        Self::new()
     }
 }
 

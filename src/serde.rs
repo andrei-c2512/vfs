@@ -12,25 +12,26 @@ pub fn deser_u8(buffer : &mut &[u8]) -> Result<u8, Error>{
     match &buffer[0..size_of::<u8>()].try_into() {
         Ok(val) => { 
             *buffer = &buffer[size_of::<u8>()..];
-            return Ok(u8::from_be_bytes(*val));
+            Ok(u8::from_be_bytes(*val))
         } ,
         Err(err) => { 
             //println!("Flopped u8");
-            return Err(Error::BadDeser(err.to_string()))
+            Err(Error::BadDeser(err.to_string()))
         } 
-    };
+    }
 }
 
 pub fn deser_u16(buffer : &mut &[u8]) -> Result<u16, Error>{ 
     match &buffer[0..size_of::<u16>()].try_into() {
         Ok(val) => { 
             *buffer = &buffer[size_of::<u16>()..];
-            return Ok(u16::from_be_bytes(*val));
+            Ok(u16::from_be_bytes(*val))
         } ,
         Err(err) => { 
             //println!("Flopped u16");
-            return Err(Error::BadDeser(err.to_string())) } 
-    };
+            Err(Error::BadDeser(err.to_string())) 
+        } 
+    }
 }
 
 pub fn deser_u32(buffer : &mut &[u8]) -> Result<u32, Error>{ 
@@ -38,24 +39,26 @@ pub fn deser_u32(buffer : &mut &[u8]) -> Result<u32, Error>{
     match &buffer[0..size_of::<u32>()].try_into() {
         Ok(val) => { 
             *buffer = &buffer[size_of::<u32>()..];
-            return Ok(u32::from_be_bytes(*val));
+            Ok(u32::from_be_bytes(*val))
         } ,
         Err(err) => {
             //println!("Flopped u32");
-            return Err(Error::BadDeser(err.to_string())) } 
-    };
+            Err(Error::BadDeser(err.to_string()))
+        } 
+    }
 }
 
 pub fn deser_usize(buffer : &mut &[u8]) -> Result<usize, Error>{ 
     match &buffer[0..size_of::<usize>()].try_into() {
         Ok(val) => { 
             *buffer = &buffer[size_of::<usize>()..];
-            return Ok(usize::from_be_bytes(*val));
+            Ok(usize::from_be_bytes(*val))
         } ,
         Err(err) => {
             //println!("Flopped usize");
-            return Err(Error::BadDeser(err.to_string())) } 
-    };
+            Err(Error::BadDeser(err.to_string())) 
+        } 
+    }
 }
 
 /* END PLS MODIFY THIS IT S SO SO UGLY */

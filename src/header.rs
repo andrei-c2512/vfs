@@ -147,11 +147,11 @@ impl Header{
     pub fn get_file_capacity(&self, file_id : u32) -> Result<usize, Error> {
         match &self.node_buffer[file_id as usize] {
             Node::File(file) => {
-                return Ok(file.capacity());                
+                Ok(file.capacity())
             }
             _ => {
-                return Err(Error::Unreachable("Reached unreachable code. Should not call get_file_capacity on a directory".to_string()));
-            }
+                Err(Error::Unreachable("Reached unreachable code. Should not call get_file_capacity on a directory".to_string()))
+            } 
         }
     }
     /*
@@ -183,7 +183,7 @@ impl Header{
             let str_id = self.str_buffer.get(step)?;
             let node_ref = &self.node_buffer[current_node as usize];
 
-            if node_ref.has_child_by_id(str_id) == false {
+            if !node_ref.has_child_by_id(str_id) {
                 return Err(Error::InvalidPath("Provided an invalid path.".to_string()));
             }
             match node_ref {

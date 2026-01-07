@@ -29,12 +29,8 @@ fn create_test(){
     };
     let paths = [ "@/etc", "@/etc/conf", "@/etc/tmp", "@/etc/tmp/p2", "@/etc/tmp/p3", "@/etc/work" ];
     for path in paths {
-        match vfs.create_dir(path){
-            Err(err) => {
-                println!("Error: {}" , err);
-            }
-            Ok(_) => {
-            }
+        if let Err(err) = vfs.create_dir(path){
+            println!("Error: {}" , err);
         }
     }
 
@@ -48,7 +44,7 @@ fn create_test(){
                 println!("Error: {}" , err);
             }
             Ok(file)=> {
-                let buf = ['$' as u8;100];
+                let buf = [b'$';100];
                 file.write_all(&buf);
                 let mut data = String::new();
                 file.read_to_string(&mut data);
@@ -99,9 +95,7 @@ fn size_test_3mb() -> Result<(), Error> {
     vfs.copy_into_vfs("res/background.jpeg", vfs_img_file)?;
 
     let mut file = match fs::OpenOptions::new()
-        .create(true)
-        .read(true)
-        .write(true)
+        .truncate(true)
         .open(input_os_file) {
         Ok(file) => {file }
         Err(err) => { return Err(
@@ -120,9 +114,7 @@ fn size_test_12mb() -> Result<(), Error> {
     vfs.copy_into_vfs("res/background.bmp", vfs_img_file)?;
 
     let mut file = match fs::OpenOptions::new()
-        .create(true)
-        .read(true)
-        .write(true)
+        .truncate(true)
         .open(input_os_file) {
         Ok(file) => {file }
         Err(err) => { return Err(
@@ -170,11 +162,8 @@ fn test_3() -> Result<(), Error> {
     let mut vfs = Vfs::new("complex.vfs")?;
     let paths = [ "@/etc", "@/etc/conf", "@/etc/tmp", "@/etc/tmp/p2", "@/etc/tmp/p3", "@/etc/work" ];
     for path in paths {
-        match vfs.create_dir(path){
-            Err(err) => {
-                println!("Error: {}" , err);
-            }
-            Ok(_) => {}
+        if let Err(err) = vfs.create_dir(path){
+            println!("Error: {}" , err);
         }
     }
     
@@ -182,9 +171,7 @@ fn test_3() -> Result<(), Error> {
     vfs.copy_into_vfs("res/background.jpeg", "@/img2.jpeg")?;
 
     let mut file = match fs::OpenOptions::new()
-        .create(true)
-        .read(true)
-        .write(true)
+        .truncate(true)
         .open("output/background.jpeg") {
         Ok(file) => {file }
         Err(err) => { return Err(
@@ -218,9 +205,7 @@ fn test_4() -> Result<(), Error>{
     vfs.copy_into_vfs("res/background.bmp", "@/img3.bmp")?;
 
     let mut file = match fs::OpenOptions::new()
-        .create(true)
-        .read(true)
-        .write(true)
+        .truncate(true)
         .open("output/background_test4.jpeg") {
         Ok(file) => {file }
         Err(err) => { return Err(
