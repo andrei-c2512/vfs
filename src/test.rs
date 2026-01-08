@@ -153,9 +153,10 @@ fn lab_example_test() -> Result<(), Error>{
         let mut file = vfs.open_entry(entry)?;
         file.read_to_string(&mut data);
 
-        print!("{}", data);
+        println!("{}", data);
     }
     passed();
+    vfs.print();
     Ok(())
 }
 
@@ -273,7 +274,7 @@ fn test_3() -> Result<(), Error> {
  * This tests having multiple big files on the system while tryinig to achieve a "dispersed" under
  * the hood representation of some files, to see how the system behaves
  */
-fn test_4() -> Result<(), Error>{
+fn _test_4() -> Result<(), Error>{
     write_test_header(10, "Testing having multiple directories AND big files + overwriting a file in the middle of 
                       the block device, to observe fragmented file correcteness");
     let mut vfs = Vfs::new("complex.vfs")?;
@@ -294,13 +295,12 @@ fn test_4() -> Result<(), Error>{
     vfs.copy_into_vfs("res/background.bmp", "img3.bmp")?;
 
     let mut file = match fs::OpenOptions::new()
-        .truncate(true)
         .read(true)
         .write(true)
-        .open("output/background_test4.jpeg") {
+        .open("output/background_test4.bmp") {
         Ok(file) => {file }
         Err(err) => { return Err(
-                Error::FileOps(string_helper::fmt_file_error(&err.to_string(), "output/background_test4.jpeg"))); 
+                Error::FileOps(string_helper::fmt_file_error(&err.to_string(), "output/background_test4.bmp"))); 
         } 
     };
 
@@ -323,7 +323,7 @@ pub fn run_all() -> Result<(), Error>{
     size_test_12mb()?;
     test_2()?;
     test_3()?;
-    test_4()?;
+    _test_4()?;
 
     Ok(())
 }

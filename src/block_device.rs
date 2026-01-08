@@ -29,7 +29,9 @@ impl BlockDevice{
     }
     // this function does not do any release build bounds checking!!!
     pub fn read_to_string(&mut self, data : &mut String, block_indices : &[u32], size : usize, file : Rc<RefCell<fs::File>>){
+       //println!("Size: {}, To read: {}", size, block_indices.len() * fs_base::BLOCK_CAPACITY);
        assert!(size <= block_indices.len() * fs_base::BLOCK_CAPACITY);
+
 
        let mut left_to_read = size;
        for block_id in block_indices.iter() { 
@@ -48,6 +50,7 @@ impl BlockDevice{
        }
     }
     pub fn read(&mut self, data : &mut Vec<u8>, block_indices : &[u32], size : usize, file : Rc<RefCell<fs::File>>) {
+       //println!("Size: {}, To read: {}", size, block_indices.len() * fs_base::BLOCK_CAPACITY);
        assert!(size <= block_indices.len() * fs_base::BLOCK_CAPACITY);
 
        let mut left_to_read = size;
@@ -65,27 +68,29 @@ impl BlockDevice{
     pub fn write(&mut self, buffer :  &[u8], block_indices : &mut Vec<u32>, file : Rc<RefCell<fs::File>>) {
         // --- REWRITE: the header size should be expandable, not hardcoded
         let header_offset = fs_base::HEADER_SIZE;
+        //println!("Writing a buffer of length: {}", buffer.len());
 
         let mut slice = buffer;
         for index in block_indices.iter() {
             let mut file_ref = file.borrow_mut();
-            if buffer.is_empty() {
+            if slice.is_empty() {
                 return;
             }
             // --- REWRITE: handle this error
             let _= file_ref.seek(SeekFrom::Start(
                     (header_offset + (*index as usize) * fs_base::BLOCK_CAPACITY) as u64)
                 );
-            let write_len = min(fs_base::MAX_PROCESS_CAPACITY, buffer.len());
-            let to_write = &buffer[0..write_len];
+            let write_len = min(fs_base::MAX_PROCESS_CAPACITY, slice.len());
+            let to_write = &slice[0..write_len];
             slice = &slice[write_len..];
 
             // --- REWRITE: handle this error
             let _ = file_ref.write_all(to_write);
         }
-
-        if !buffer.is_empty(){
-            let new_blocks = &Self::append(buffer, file.clone());
+        
+        if !slice.is_empty(){
+            // println!("Left to append: {}", slice.len());
+            let new_blocks = &Self::append(slice, file.clone());
             for i in 0..(*new_blocks) {
                 block_indices.push(i + self.num_blocks);
             }
@@ -147,22 +152,15 @@ impl BlockDevice{
 
         let blank = vec![b'-'; remainder];
 
-
         // --- REWRITE: handle this error vro
         {
             let mut file_ref = file.borrow_mut();
 
-            match file_ref.seek(SeekFrom::Start(buffer_len as u64)){
-                Ok(_) => {}
-                Err(err) => {
-                    println!("Error in seeking to the end of the file: {}", err);
-                }
+            if let Err(err) = file_ref.seek(SeekFrom::Start(buffer_len as u64)){
+                println!("Error in seeking to the end of the file: {}", err);
             }
-            match file_ref.write_all(&blank) {
-                Ok(_) => {}
-                Err(err) => {
-                    println!("Error in writing to the end of the file: {}", err);
-                }
+            if let Err(err) =  file_ref.write_all(&blank) {
+                println!("Error in writing to the end of the file: {}", err);
             }
 
             let _ = file_ref.seek(SeekFrom::Start((buffer_len + remainder)as u64));

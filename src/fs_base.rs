@@ -10,7 +10,7 @@ const WRITE : u16 = 1 << 1;
 pub const BLOCK_DEVICE_PREAMBLE : &str = "BLOCK_DEVICE_PREAMBLE";
 pub const HEADER_TAIL : &str = "HEADER_END";
 pub const BLOCK_CAPACITY : usize = 8 * 4;
-pub const MAX_PROCESS_CAPACITY : usize= BLOCK_CAPACITY * 2;
+pub const MAX_PROCESS_CAPACITY : usize= BLOCK_CAPACITY;
 
 /* 8kb for header */
 pub const HEADER_SIZE : usize = 1024;
