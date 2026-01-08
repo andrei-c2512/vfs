@@ -1,7 +1,5 @@
-
-
-pub fn split_path(path : &str) -> Vec<String>{
-    let list : Vec<&str> = path.split('/').collect();
+pub fn split_path(path: &str) -> Vec<String> {
+    let list: Vec<&str> = path.split('/').collect();
     let mut result = Vec::with_capacity(list.len());
     for view in list.iter() {
         result.push(view.to_string());
@@ -9,7 +7,6 @@ pub fn split_path(path : &str) -> Vec<String>{
     result
 }
 
-pub fn fmt_file_error(message : &str, path : &str) -> String{
+pub fn fmt_file_error(message: &str, path: &str) -> String {
     format!("{} : '{}'", message, path)
 }
-

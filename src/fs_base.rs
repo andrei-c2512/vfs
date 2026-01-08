@@ -7,16 +7,16 @@ const READ : u16 = 1 << 0;
 const WRITE : u16 = 1 << 1;
 */
 
-pub const BLOCK_DEVICE_PREAMBLE : &str = "BLOCK_DEVICE_PREAMBLE";
-pub const HEADER_TAIL : &str = "HEADER_END";
-pub const BLOCK_CAPACITY : usize = 8 * 4;
-pub const MAX_PROCESS_CAPACITY : usize= BLOCK_CAPACITY;
+pub const BLOCK_DEVICE_PREAMBLE: &str = "BLOCK_DEVICE_PREAMBLE";
+pub const HEADER_TAIL: &str = "HEADER_END";
+pub const BLOCK_CAPACITY: usize = 8 * 4;
+pub const MAX_PROCESS_CAPACITY: usize = BLOCK_CAPACITY;
 
 /* 8kb for header */
-pub const HEADER_SIZE : usize = 1024;
+pub const HEADER_SIZE: usize = 1024;
 
 #[derive(Debug)]
-pub enum Error{
+pub enum Error {
     InvalidPreamble(String),
     InvalidStringBuffer(String),
     EmptyPath(String),
@@ -28,12 +28,11 @@ pub enum Error{
     BadCall(String),
 }
 
-
-impl fmt::Display for Error{
+impl fmt::Display for Error {
     // -- REWRITE: Give each error type a proper message header (or whatever the preceeding thing
     // is called. Also review error messages in general
-    fn fmt(&self, f : &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
             Error::InvalidPreamble(e) => write!(f, "Invalid preamble: {}", e),
             Error::InvalidStringBuffer(e) => write!(f, "Invalid string buffer: {}", e),
             Error::EmptyPath(e) => write!(f, "Empty path: {}", e),
