@@ -1,5 +1,6 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::process::Command;
+use std::fmt;
 
 #[derive(PartialEq, Eq)]
 pub struct Time{
@@ -42,6 +43,11 @@ impl Default for Time{
         Self::new()
     }
 }
+impl fmt::Display for Time{
+    fn fmt(&self, f : &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}:{}:{}", self.hour, self.minute, self.second)
+    } 
+}
 
 #[derive(PartialEq, Eq)]
 pub struct Date{
@@ -78,6 +84,14 @@ impl Default for Date{
         Self::new()
     }
 }
+
+
+impl fmt::Display for Date{
+    fn fmt(&self, f : &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}-{}-{}", self.day, self.month, self.year)
+    } 
+}
+
 #[derive(PartialEq, Eq)]
 pub struct DateTime{
     pub date : Date,
@@ -100,4 +114,10 @@ impl Default for DateTime{
     fn default() -> Self{
         Self::new()
     }
+}
+
+impl fmt::Display for DateTime{
+    fn fmt(&self, f : &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} {}", self.date, self.time)
+    } 
 }

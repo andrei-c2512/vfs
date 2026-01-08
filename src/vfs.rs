@@ -57,7 +57,9 @@ impl Vfs{
     }
     pub fn read_dir(&self, path : &str) -> Result<Vec<u32>, Error>{ 
         let header_ref = self.header.borrow_mut();
-        let node_id = header_ref.navigate(path)?;
+
+        let engine_path = Self::to_engine_path(path);
+        let node_id = header_ref.navigate(&engine_path)?;
         let node = &header_ref.node_buffer[node_id as usize];        
             
         match node{
@@ -70,7 +72,8 @@ impl Vfs{
         }
     }
     pub fn create_dir(&mut self, path : &str) -> Result<ops::Directory, Error>{
-        let (last_directive, path_to_directive) = self.split_from_cwd(path);
+        let engine_path = Self::to_engine_path(path);
+        let (last_directive, path_to_directive) = self.split_from_cwd(&engine_path);
         
         let _dir_id = {
             let mut header_ref = self.header.borrow_mut();
@@ -89,7 +92,16 @@ impl Vfs{
         Ok(ops::Directory::new())
     }
     pub fn create(&mut self, path : &str) -> Result<ops::File, Error> { 
-        let (last_directive, path_to_directive) = self.split_from_cwd(path);
+        match self.open_file(path){
+            Ok(file) => {
+                return Ok(file);
+            }
+            _ => {}
+        };
+        let engine_path = Self::to_engine_path(path);
+        let (last_directive, path_to_directive) = self.split_from_cwd(&engine_path);
+
+
         let file_id = {
             let mut header_ref = self.header.borrow_mut();
             let name_id = header_ref.str_buffer.add(last_directive);
@@ -110,7 +122,7 @@ impl Vfs{
     }
     pub fn open_file(&self, path : &str) -> Result<ops::File, Error> {
         let header_ref = self.header.borrow_mut();
-        let node_id = header_ref.navigate(path)?;
+        let node_id = header_ref.navigate(&Self::to_engine_path(path))?;
         let node = &header_ref.node_buffer[node_id as usize];        
             
         match node{
@@ -230,6 +242,9 @@ impl Vfs{
         if data.len() < fs_base::HEADER_SIZE {
             BlockDevice::append_header_filler(data.len(), self.file.clone());
         }
+    }
+    fn to_engine_path(path : &str) -> String{
+        "@/".to_string() + path
     }
 }
 

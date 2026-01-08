@@ -18,6 +18,8 @@ use crate::fs_base::Error;
 use crate::util::string_helper;
 
 use std::fs;
+use std::thread;
+use std::time::Duration;
 
 fn create_test(){
     let mut vfs = match Vfs::new("test.vfs"){
@@ -27,15 +29,15 @@ fn create_test(){
             return;
         }
     };
-    let paths = [ "@/etc", "@/etc/conf", "@/etc/tmp", "@/etc/tmp/p2", "@/etc/tmp/p3", "@/etc/work" ];
+    let paths = [ "etc", "etc/conf", "etc/tmp", "etc/tmp/p2", "etc/tmp/p3", "etc/work" ];
     for path in paths {
         if let Err(err) = vfs.create_dir(path){
             println!("Error: {}" , err);
         }
     }
 
-    //let file_paths = [ "@/etc/file.txt"];
-    let file_paths = [ "@/etc/file.txt", "@/etc/tmp/file2.txt", "@/etc/work/file.txt" ];
+    //let file_paths = [ "etc/file.txt"];
+    let file_paths = [ "etc/file.txt", "etc/tmp/file2.txt", "etc/work/file.txt" ];
 
     for path in file_paths {
         let mut res = vfs.create(path);
@@ -66,17 +68,17 @@ fn read_test(path : &str) {
 fn lab_example_test() -> Result<(), Error>{
     let mut vfs = Vfs::new("realfile.vfs")?;
 
-    vfs.create_dir("@/rs")?;
+    vfs.create_dir("rs")?;
     {
-        let mut f1 = vfs.create("@/rs/abc.txt")?;
-        let mut f2 = vfs.create("@/rs/def.txt")?;
+        let mut f1 = vfs.create("rs/abc.txt")?;
+        let mut f2 = vfs.create("rs/def.txt")?;
 
         f1.write_all(b"hello");
         f2.write_all(b"world");
     }
 
     let mut data = String::new();
-    for entry in vfs.read_dir("@/rs")? {
+    for entry in vfs.read_dir("rs")? {
         data.clear();
 
         let mut file = vfs.open_entry(entry)?;
@@ -90,7 +92,7 @@ fn lab_example_test() -> Result<(), Error>{
 
 fn size_test_3mb() -> Result<(), Error> {
     let mut vfs = Vfs::new("medium.vfs")?;
-    let vfs_img_file = "@/img.jpeg";
+    let vfs_img_file = "img.jpeg";
     let input_os_file = "output/background.jpeg";
     vfs.copy_into_vfs("res/background.jpeg", vfs_img_file)?;
 
@@ -111,7 +113,7 @@ fn size_test_3mb() -> Result<(), Error> {
 
 fn size_test_12mb() -> Result<(), Error> {
     let mut vfs = Vfs::new("large.vfs")?;
-    let vfs_img_file = "@/img.bmp";
+    let vfs_img_file = "img.bmp";
     let input_os_file = "output/background.bmp";
     vfs.copy_into_vfs("res/background.bmp", vfs_img_file)?;
 
@@ -135,13 +137,13 @@ fn size_test_12mb() -> Result<(), Error> {
  */
 fn test_2() -> Result<(), Error> {
     let mut vfs = Vfs::new("test2.vfs")?;
-    let vfs_files = [ "@/rs/abc.txt", "@/rs/def.txt"] ;
+    let vfs_files = [ "rs/abc.txt", "rs/def.txt"] ;
     let os_files = [ "res/test1.txt", "res/test2.txt"] ;
 
 
-    //let vfs_files = [ "@/rs/abc.txt"] ;
+    //let vfs_files = [ "rs/abc.txt"] ;
     //let os_files = [ "res/test1.txt"] ;
-    vfs.create_dir("@/rs")?;
+    vfs.create_dir("rs")?;
     {
         for i in 0..vfs_files.len() {
             vfs.copy_into_vfs(os_files[i], vfs_files[i])?;
@@ -155,7 +157,6 @@ fn test_2() -> Result<(), Error> {
         println!("Result of reading file '{}': {:?}", path, data);
     }
 
-
     Ok(()) 
 }
 
@@ -164,15 +165,15 @@ fn test_2() -> Result<(), Error> {
  */
 fn test_3() -> Result<(), Error> {
     let mut vfs = Vfs::new("complex.vfs")?;
-    let paths = [ "@/etc", "@/etc/conf", "@/etc/tmp", "@/etc/tmp/p2", "@/etc/tmp/p3", "@/etc/work" ];
+    let paths = [ "etc", "etc/conf", "etc/tmp", "etc/tmp/p2", "etc/tmp/p3", "etc/work" ];
     for path in paths {
         if let Err(err) = vfs.create_dir(path){
             println!("Error: {}" , err);
         }
     }
     
-    vfs.copy_into_vfs("res/background.jpeg", "@/img1.jpeg")?; 
-    vfs.copy_into_vfs("res/background.jpeg", "@/img2.jpeg")?;
+    vfs.copy_into_vfs("res/background.jpeg", "img1.jpeg")?; 
+    vfs.copy_into_vfs("res/background.jpeg", "img2.jpeg")?;
 
     let mut file = match fs::OpenOptions::new()
         .truncate(true)
@@ -185,7 +186,7 @@ fn test_3() -> Result<(), Error> {
         } 
     };
 
-    vfs.copy_from_vfs("@/img2.jpeg", &mut file)?;
+    vfs.copy_from_vfs("img2.jpeg", &mut file)?;
     Ok(())
 }
 
@@ -195,20 +196,21 @@ fn test_3() -> Result<(), Error> {
  */
 fn test_4() -> Result<(), Error>{
     let mut vfs = Vfs::new("complex.vfs")?;
-    let paths = [ "@/etc", "@/etc/conf", "@/etc/tmp", "@/etc/tmp/p2", "@/etc/tmp/p3", "@/etc/work" ];
+    let paths = [ "etc", "etc/conf", "etc/tmp", "etc/tmp/p2", "etc/tmp/p3", "etc/work" ];
     for path in paths {
         if let Err(err) = vfs.create_dir(path){
             println!("Error: {}" , err);
         }
     }
     
-    vfs.copy_into_vfs("res/background.jpeg", "@/img1.jpeg")?; 
-    vfs.copy_into_vfs("res/background.bmp", "@/img2.bmp")?;
-    vfs.copy_into_vfs("res/background.jpeg", "@/img3.bmp")?;
-    vfs.copy_into_vfs("res/background.jpeg", "@/img4.jpeg")?; 
+    vfs.copy_into_vfs("res/background.jpeg", "img1.jpeg")?; 
+    vfs.copy_into_vfs("res/background.bmp", "img2.bmp")?;
+    vfs.copy_into_vfs("res/background.jpeg", "img3.bmp")?;
+    vfs.copy_into_vfs("res/background.jpeg", "img4.jpeg")?; 
     
     // overwriting the file, making it be split in 2 (because img4 is in the middle)
-    vfs.copy_into_vfs("res/background.bmp", "@/img3.bmp")?;
+    thread::sleep(Duration::from_secs(3));
+    vfs.copy_into_vfs("res/background.bmp", "img3.bmp")?;
 
     let mut file = match fs::OpenOptions::new()
         .truncate(true)
@@ -221,9 +223,10 @@ fn test_4() -> Result<(), Error>{
         } 
     };
 
-    //vfs.copy_from_vfs("@/img3.bmp", &mut file)?;
+    //vfs.copy_from_vfs("img3.bmp", &mut file)?;
 
-    vfs.copy_from_vfs("@/img3.bmp", &mut file)?;
+    vfs.copy_from_vfs("img3.bmp", &mut file)?;
+    vfs.print();    
     Ok(())
 }
 

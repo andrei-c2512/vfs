@@ -26,13 +26,13 @@ pub fn print_tree(node_id : u32, buffer : &Vec<Node>, str_buf : &StringBuffer, l
     let n = &buffer[node_id as usize];
     match n{
         Node::Directory(dir) => {
-            println!("{}{}", tab(level), str_buf.string_list[dir.inode.name_id as usize]);
+            println!("{}{} Created: {} ", tab(level), str_buf.string_list[dir.inode.name_id as usize], dir.inode.created_at);
             for entry_id in dir.children.iter() {
                 print_tree(*entry_id, buffer, str_buf, level + 1);
             }
         }
         Node::File(file) => {
-            println!("{}{}", tab(level), str_buf.string_list[file.inode.name_id as usize]);
+            println!("{}{} Created: {} Last modified: {}", tab(level), str_buf.string_list[file.inode.name_id as usize], file.inode.created_at, file.inode.last_modified);
         }
     }
 }

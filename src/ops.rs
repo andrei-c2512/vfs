@@ -1,6 +1,7 @@
 use crate::header::{Header, Node};
 use crate::fs_base::Error;
 use crate::block_device::BlockDevice;
+use crate::util::date_time::{DateTime};
 //use crate::file::FileData;
 
 use std::fs;
@@ -25,6 +26,7 @@ impl File{
         match node {
             Node::File(file_data) => {
                 self.block_device.borrow_mut().write(buffer, &mut file_data.block_indices, self.vfs_file.clone());
+                file_data.inode.last_modified = DateTime::now();
                 file_data.inode.size = buffer.len();
             }
             Node::Directory(_) => {
