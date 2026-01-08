@@ -92,12 +92,9 @@ impl Vfs{
         Ok(ops::Directory::new())
     }
     pub fn create(&mut self, path : &str) -> Result<ops::File, Error> { 
-        match self.open_file(path){
-            Ok(file) => {
-                return Ok(file);
-            }
-            _ => {}
-        };
+        if let Ok(file) = self.open_file(path) {
+            return Ok(file);
+        }
         let engine_path = Self::to_engine_path(path);
         let (last_directive, path_to_directive) = self.split_from_cwd(&engine_path);
 
@@ -180,13 +177,10 @@ impl Vfs{
     pub fn print(&self) {
         let header = self.header.borrow();
         printer::print_header(&header);
-        println!("{}", header.node_buffer.len());
-        println!("{}", header.str_buffer.string_list.len());
     }
     // dunno a good name for this
     fn split_from_cwd<'a>(&mut self, path : &'a str) -> (&'a str, &'a str) {
         let last_slash_ind = path.rfind('/').unwrap_or(0);
-        println!("{}", last_slash_ind);
         match last_slash_ind {
             0 => { (path, path) }
             _ => { (&path[last_slash_ind + 1..], &path[..last_slash_ind])}

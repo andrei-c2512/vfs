@@ -153,15 +153,13 @@ impl BlockDevice{
             let mut file_ref = file.borrow_mut();
 
             match file_ref.seek(SeekFrom::Start(buffer_len as u64)){
-                Ok(_) => {
-                }
+                Ok(_) => {}
                 Err(err) => {
                     println!("Error in seeking to the end of the file: {}", err);
                 }
             }
             match file_ref.write_all(&blank) {
-                Ok(_) => {
-                }
+                Ok(_) => {}
                 Err(err) => {
                     println!("Error in writing to the end of the file: {}", err);
                 }
