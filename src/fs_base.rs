@@ -12,6 +12,12 @@ pub const HEADER_TAIL: &str = "HEADER_END";
 pub const BLOCK_CAPACITY: usize = 8 * 4;
 pub const MAX_PROCESS_CAPACITY: usize = BLOCK_CAPACITY;
 
+// THE SYSTEM WAS THOUGHT IN MIND IN A WAY THAT BUFFERED_IO_LIMIT IS A MULTIPLE OF BLOCK_CAPACITY!!
+pub const BUFFERED_IO_LIMIT: usize = BLOCK_CAPACITY * 64;
+
+// 16kb
+pub const READ_TO_STRING_LIMIT: usize = 16 * 1024;
+
 /* 8kb for header */
 pub const HEADER_SIZE: usize = 1024;
 

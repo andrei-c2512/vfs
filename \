@@ -31,17 +31,23 @@ fn passed() {
     println!("--- TEST PASSED\n\n");
 }
 
-fn open_output_file(path: &str) -> Result<fs::File, Error> {
-    match fs::OpenOptions::new().read(true).write(true).open(path) {
+fn open_output_file(path : &str) -> Result<fs::File, Error>{
+    match fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(path)
+    {
         Ok(file) => Ok(file),
         Err(err) => {
             return Err(Error::FileOps(string_helper::fmt_file_error(
-                &err.to_string(),
-                path,
+                &err.to_string(),path,
             )));
         }
     }
 }
+
+
+
 
 pub fn directory_serde() {
     write_test_header(
@@ -399,7 +405,7 @@ pub fn test_file_ops_1() -> Result<(), Error> {
     passed();
     Ok(())
 }
-pub fn test_file_ops_2() -> Result<(), Error> {
+pub fn test_file_ops_2() -> Result<(), Error>{
     write_test_header(
         10,
         "Testing having multiple directories AND big files + overwriting a file in the middle of 
@@ -422,21 +428,25 @@ pub fn test_file_ops_2() -> Result<(), Error> {
 
     let mut file = vfs.create("goon.txt")?;
     file.write_from_file("res/background.jpeg")?;
-
+    
     let mut os_file = open_output_file("output/background_5.jpeg")?;
     vfs.copy_from_vfs("goon.txt", &mut os_file)?;
+    
 
     Ok(())
 }
 
 fn size_test_12mb_file_ops_3() -> Result<(), Error> {
-    write_test_header(12, "Testing moving a 12MB file on the vfs");
+    write_test_header(7, "Testing moving a 12MB file on the vfs");
     let mut vfs = Vfs::new("large.vfs")?;
     let vfs_img_file = "img.bmp";
+    let input_os_file = "output/background.bmp";
     vfs.copy_into_vfs("res/background.bmp", vfs_img_file)?;
+        
+    let vfs_file = vfs.open_file(vfs_img_file)?;
 
-    let mut vfs_file = vfs.open_file(vfs_img_file)?;
-    vfs_file.write_to_os("output/background_10.bmp");
+
+
 
     passed();
     Ok(())
