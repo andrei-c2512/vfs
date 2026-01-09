@@ -34,12 +34,10 @@ fn passed() {
 fn open_output_file(path: &str) -> Result<fs::File, Error> {
     match fs::OpenOptions::new().read(true).write(true).open(path) {
         Ok(file) => Ok(file),
-        Err(err) => {
-            return Err(Error::FileOps(string_helper::fmt_file_error(
-                &err.to_string(),
-                path,
-            )));
-        }
+        Err(err) => Err(Error::FileOps(string_helper::fmt_file_error(
+            &err.to_string(),
+            path,
+        ))),
     }
 }
 
@@ -107,15 +105,9 @@ pub fn string_buffer_serde() {
     passed();
 }
 
-fn create_test() {
+fn create_test() -> Result<(), Error> {
     write_test_header(3, "Testing the creation of a simple directory tree");
-    let mut vfs = match Vfs::new("test.vfs") {
-        Ok(vfs) => vfs,
-        Err(err) => {
-            println!("{}", err);
-            return;
-        }
-    };
+    let mut vfs = Vfs::new("test.vfs")?;
     let paths = [
         "etc",
         "etc/conf",
@@ -134,23 +126,18 @@ fn create_test() {
     let file_paths = ["etc/file.txt", "etc/tmp/file2.txt", "etc/work/file.txt"];
 
     for path in file_paths {
-        let mut res = vfs.create(path);
-        match &mut res {
-            Err(err) => {
-                println!("Error: {}", err);
-                return;
-            }
-            Ok(file) => {
-                let buf = [b'$'; 100];
-                file.write_all(&buf);
-                let mut data = String::new();
-                file.read_to_string(&mut data);
-                println!("Printing file contents:\n{}", data);
-            }
-        }
+        let mut file = vfs.create(path)?;
+
+        let buf = [b'$'; 100];
+        file.write_all(&buf);
+        let mut data = String::new();
+        file.read_to_string(&mut data)?;
+        println!("Printing file contents:\n{}", data);
     }
     vfs.print();
     passed();
+
+    Ok(())
 }
 
 fn read_test(path: &str) {
@@ -184,7 +171,7 @@ fn lab_example_test() -> Result<(), Error> {
         data.clear();
 
         let mut file = vfs.open_entry(entry)?;
-        file.read_to_string(&mut data);
+        file.read_to_string(&mut data)?;
 
         println!("{}", data);
     }
@@ -267,7 +254,7 @@ fn test_2() -> Result<(), Error> {
     for path in vfs_files.iter() {
         let mut f = vfs.open_file(path)?;
         let mut data = String::new();
-        f.read_to_string(&mut data);
+        f.read_to_string(&mut data)?;
         println!("Result of reading file '{}': {:?}", path, data);
     }
 
@@ -474,9 +461,8 @@ fn file_ops_test_4() -> Result<(), Error> {
     thread::sleep(Duration::from_secs(3));
     vfs.copy_into_vfs("res/background.bmp", "img3.bmp")?;
 
-
     //vfs.copy_from_vfs("img3.bmp", &mut file)?;
-        
+
     let mut file = vfs.open_file("img3.bmp")?;
     file.write_to_os("output/background_test4.bmp")?;
     vfs.print();
@@ -485,20 +471,27 @@ fn file_ops_test_4() -> Result<(), Error> {
     Ok(())
 }
 
+fn very_big_file_test() -> Result<(), Error> {
+    let mut vfs = Vfs::new("complex.vfs")?;
+    let mut file = vfs.create("trash.shit")?;
+    file.write_gibberish()?;
+    Ok(())
+}
 
 pub fn run_all() -> Result<(), Error> {
     directory_serde();
     string_buffer_serde();
-    create_test();
+    create_test()?;
     read_test("test.vfs");
     lab_example_test()?;
     size_test_3mb()?;
     size_test_12mb()?;
     test_2()?;
     test_3()?;
-    //_test_4()?;
+    _test_4()?;
     test_file_ops_1()?;
-    //test_file_ops_1()?;
+    very_big_file_test()?;
+    test_file_ops_1()?;
     // these names are getting ridiculous
     size_test_12mb_file_ops_3()?;
     file_ops_test_4()?;

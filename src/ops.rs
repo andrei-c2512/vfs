@@ -50,14 +50,37 @@ impl File {
         }
         None
     }
+    // imma do this later to make this showcase worthy
+    /*
+    pub fn write_chunk(&mut self, buffer : &[u8]) -> Result<(), Error> {
+        let node = &mut self.header.borrow_mut().node_buffer[self.file_id as usize];
+        let file_data = match node {
+            Node::File(file_data) => file_data,
+            Node::Directory(_) => {
+                return Err(Error::BadCall(
+                    "Attempted to use a directory index in file operations".to_string(),
+                ));
+            }
+        };
+
+        self.block_device.borrow_mut().append(
+            buffer,
+            &mut file_data.block_indices,
+            self.vfs_file.clone(),
+            file_data.inode.size,
+        );
+
+        file_data.inode.size += buffer.len();
+        Ok(())
+    }
+    */
     pub fn write_from_file(&mut self, path: &str) -> Result<(), Error> {
         let file = match fs::File::open(path) {
             Ok(file) => file,
             Err(err) => {
                 return Err(Error::FileOps(format!(
                     "Unable to write from file '{}': {}",
-                    path,
-                    err.to_string()
+                    path, err
                 )));
             }
         };
@@ -78,7 +101,6 @@ impl File {
         let mut total_bytes_read = 0;
 
         loop {
-            println!("loopus");
             let bytes_read = match reader.read(&mut self.buffer) {
                 Ok(bytes_read) => bytes_read,
                 Err(err) => {
@@ -91,12 +113,11 @@ impl File {
             if bytes_read == 0 {
                 break;
             }
-            println!("Bytes read: {}", bytes_read);
             self.block_device.borrow_mut().append(
-                &self.buffer,
+                &self.buffer[..bytes_read],
                 &mut file_data.block_indices,
                 self.vfs_file.clone(),
- total_bytes_read,
+                total_bytes_read,
             );
             total_bytes_read += bytes_read;
         }
@@ -164,8 +185,7 @@ impl File {
             Err(err) => {
                 return Err(Error::FileOps(format!(
                     "Error in opening file '{}': {}",
-                    path,
-                    err.to_string()
+                    path, err
                 )));
             }
         };
@@ -177,6 +197,36 @@ impl File {
             }
             _ = file.write_all(&buffer);
         }
+        Ok(())
+    }
+    pub fn write_gibberish(&mut self) -> Result<(), Error> {
+        let chunk = vec![b'A'; BUFFERED_IO_LIMIT]; // 1MB chunks
+        let n_chunks = 61035; // achieves ~32 GB
+        //
+        let node = &mut self.header.borrow_mut().node_buffer[self.file_id as usize];
+        let mut total_bytes_read = 0;
+
+        let file_data = match node {
+            Node::File(file_data) => file_data,
+            Node::Directory(_) => {
+                return Err(Error::BadCall(
+                    "Attempted to use a directory index in file operations".to_string(),
+                ));
+            }
+        };
+
+        file_data.inode.size = 0;
+        for _ in 0..n_chunks {
+            self.block_device.borrow_mut().append(
+                &chunk,
+                &mut file_data.block_indices,
+                self.vfs_file.clone(),
+                total_bytes_read,
+            );
+            total_bytes_read += chunk.len();
+        }
+
+        file_data.inode.size = total_bytes_read;
         Ok(())
     }
 }

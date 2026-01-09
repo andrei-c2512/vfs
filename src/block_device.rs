@@ -312,7 +312,6 @@ impl BlockDevice {
 
         *buffer = &buffer[remainder..];
 
-
         println!("Called write block remainder");
         true
     }
