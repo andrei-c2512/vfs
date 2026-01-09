@@ -337,6 +337,7 @@ fn _test_4() -> Result<(), Error> {
     vfs.copy_into_vfs("res/background.jpeg", "img4.jpeg")?;
 
     // overwriting the file, making it be split in 2 (because img4 is in the middle)
+    println!("Sleeping 3 seconds...");
     thread::sleep(Duration::from_secs(3));
     vfs.copy_into_vfs("res/background.bmp", "img3.bmp")?;
 
@@ -458,6 +459,7 @@ fn file_ops_test_4() -> Result<(), Error> {
     vfs.copy_into_vfs("res/background.jpeg", "img4.jpeg")?;
 
     // overwriting the file, making it be split in 2 (because img4 is in the middle)
+    println!("Sleeping 3 seconds...");
     thread::sleep(Duration::from_secs(3));
     vfs.copy_into_vfs("res/background.bmp", "img3.bmp")?;
 
@@ -490,10 +492,11 @@ pub fn run_all() -> Result<(), Error> {
     test_3()?;
     _test_4()?;
     test_file_ops_1()?;
-    very_big_file_test()?;
     test_file_ops_1()?;
     // these names are getting ridiculous
     size_test_12mb_file_ops_3()?;
     file_ops_test_4()?;
+
+    very_big_file_test()?;
     Ok(())
 }
