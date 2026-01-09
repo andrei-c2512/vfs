@@ -381,6 +381,8 @@ pub fn test_file_ops_1() -> Result<(), Error> {
     let vfs_files = ["rs/abc.txt", "rs/def.txt"];
     let os_files = ["res/test1.txt", "res/test2.txt"];
 
+    //let vfs_files = ["rs/abc.txt"];
+    //let os_files = ["res/test1.txt"];
     vfs.create_dir("rs")?;
     {
         for i in 0..vfs_files.len() {
@@ -436,11 +438,54 @@ fn size_test_12mb_file_ops_3() -> Result<(), Error> {
     vfs.copy_into_vfs("res/background.bmp", vfs_img_file)?;
 
     let mut vfs_file = vfs.open_file(vfs_img_file)?;
-    vfs_file.write_to_os("output/background_10.bmp");
+    vfs_file.write_to_os("output/background_10.bmp")?;
 
     passed();
     Ok(())
 }
+
+fn file_ops_test_4() -> Result<(), Error> {
+    write_test_header(
+        10,
+        "Testing having multiple directories AND big files + overwriting a file in the middle of 
+                      the block device, to observe fragmented file correcteness",
+    );
+    let mut vfs = Vfs::new("complex.vfs")?;
+    let paths = [
+        "etc",
+        "etc/conf",
+        "etc/tmp",
+        "etc/tmp/p2",
+        "etc/tmp/p3",
+        "etc/work",
+    ];
+    for path in paths {
+        if let Err(err) = vfs.create_dir(path) {
+            println!("Error: {}", err);
+        }
+    }
+
+    vfs.copy_into_vfs("res/background.jpeg", "img1.jpeg")?;
+    vfs.copy_into_vfs("res/background.bmp", "img2.bmp")?;
+    vfs.copy_into_vfs("res/background.jpeg", "img3.bmp")?;
+    vfs.copy_into_vfs("res/background.jpeg", "img4.jpeg")?;
+
+    // overwriting the file, making it be split in 2 (because img4 is in the middle)
+    thread::sleep(Duration::from_secs(3));
+    vfs.copy_into_vfs("res/background.bmp", "img3.bmp")?;
+
+
+    //vfs.copy_from_vfs("img3.bmp", &mut file)?;
+        
+    let mut file = vfs.open_file("img3.bmp")?;
+    file.write_to_os("output/background_test4.bmp")?;
+    vfs.print();
+
+    passed();
+    Ok(())
+}
+
+
 pub fn run_all() -> Result<(), Error> {
     directory_serde();
     string_buffer_serde();
@@ -453,8 +498,9 @@ pub fn run_all() -> Result<(), Error> {
     test_3()?;
     //_test_4()?;
     test_file_ops_1()?;
+    //test_file_ops_1()?;
     // these names are getting ridiculous
     size_test_12mb_file_ops_3()?;
-
+    file_ops_test_4()?;
     Ok(())
 }

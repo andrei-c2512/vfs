@@ -109,7 +109,6 @@ impl BlockDevice {
             }
         };
         let mut left_to_read = total_to_read;
-
         let mut start = 0;
         for block_id in block_indices.iter().skip(*from as usize) {
             let to_read = min(left_to_read, fs_base::BLOCK_CAPACITY);
@@ -152,7 +151,8 @@ impl BlockDevice {
     ) {
         // --- REWRITE: the header size should be expandable, not hardcoded
         let header_offset = fs_base::HEADER_SIZE;
-        //println!("Writing a buffer of length: {}", buffer.len());
+        println!("Writing a buffer of length: {}", buffer.len());
+        println!("Block index: {}", block_ind);
 
         let mut slice = buffer;
         let block_ind_start = {
@@ -163,6 +163,7 @@ impl BlockDevice {
                 block_ind
             }
         };
+
         for index in block_indices.iter().skip(block_ind_start) {
             let mut file_ref = file.borrow_mut();
             if slice.is_empty() {
@@ -181,7 +182,7 @@ impl BlockDevice {
         }
 
         if !slice.is_empty() {
-            // println!("Left to append: {}", slice.len());
+            println!("Left to append: {}", slice.len());
             let new_blocks = Self::allocate(slice, file.clone());
             for i in 0..(new_blocks) {
                 block_indices.push(i + self.num_blocks);
@@ -192,6 +193,7 @@ impl BlockDevice {
     // returns the number of blocks that been appended to the file
     pub fn allocate(buffer: &[u8], file: Rc<RefCell<fs::File>>) -> u32 {
         let blocks = Self::buffer_in_blocks(buffer);
+
         // --- REWRITE: handle this error vro. This MIGHT result in a file corruption: what if
         // write_all() fails and I return the wrong number of blocks that have been written? Might
         // mess up everything
@@ -309,6 +311,9 @@ impl BlockDevice {
         let _ = file_ref.write_all(to_be_written);
 
         *buffer = &buffer[remainder..];
+
+
+        println!("Called write block remainder");
         true
     }
 }

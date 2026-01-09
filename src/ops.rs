@@ -61,7 +61,6 @@ impl File {
                 )));
             }
         };
-
         let mut reader = io::BufReader::new(file);
         let node = &mut self.header.borrow_mut().node_buffer[self.file_id as usize];
 
@@ -79,6 +78,7 @@ impl File {
         let mut total_bytes_read = 0;
 
         loop {
+            println!("loopus");
             let bytes_read = match reader.read(&mut self.buffer) {
                 Ok(bytes_read) => bytes_read,
                 Err(err) => {
@@ -96,7 +96,7 @@ impl File {
                 &self.buffer,
                 &mut file_data.block_indices,
                 self.vfs_file.clone(),
-                total_bytes_read,
+ total_bytes_read,
             );
             total_bytes_read += bytes_read;
         }
@@ -172,11 +172,10 @@ impl File {
 
         loop {
             let bytes_read = self.read_chunk(&mut buffer)?;
-            println!("Bytes read: {}", bytes_read);
             if bytes_read == 0 {
                 break;
             }
-            file.write_all(&buffer);
+            _ = file.write_all(&buffer);
         }
         Ok(())
     }
